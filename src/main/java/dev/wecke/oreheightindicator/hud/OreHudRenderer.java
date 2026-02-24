@@ -10,20 +10,25 @@ import net.minecraft.item.Items;
 import net.minecraft.text.Text;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
 public final class OreHudRenderer {
+    private static final String TITLE_LINE = "Ore Height Indicator";
     private static final int BG_COLOR = 0x88000000;
     private static final int TEXT_COLOR = 0xFFFFFFFF;
     private static final int ICON_SIZE = 16;
     private static final int ICON_TEXT_GAP = 2;
+    private static final int HEADER_LINE_COUNT = 2;
+    private static final float REORDER_ANIMATION_SPEED = 12.0f;
 
     private final ModConfig config;
     private final OreProbabilityService probabilityService;
-    private final List<String> cachedLines = new ArrayList<>();
-    private final List<ItemStack> cachedIcons = new ArrayList<>();
+    private final List<AnimatedOreRow> animatedRows = new ArrayList<>();
+    private final List<AnimatedOreRow> renderRows = new ArrayList<>();
     private int cachedY = Integer.MIN_VALUE;
+    private long lastRenderNanos = 0L;
 
     public OreHudRenderer(ModConfig config, OreProbabilityService probabilityService) {
         this.config = config;
@@ -42,56 +47,59 @@ public final class OreHudRenderer {
     }
 
     public void render(DrawContext context) {
-        if (!config.hudEnabled || cachedLines.isEmpty()) {
+        if (!config.hudEnabled || cachedY == Integer.MIN_VALUE) {
             return;
         }
 
         MinecraftClient client = MinecraftClient.getInstance();
         TextRenderer textRenderer = client.textRenderer;
+        int lineHeight = Math.max(textRenderer.fontHeight, ICON_SIZE) + 2;
 
-        int contentWidth = 0;
-        for (int i = 0; i < cachedLines.size(); i++) {
-            String line = cachedLines.get(i);
-            int lineWidth = textRenderer.getWidth(line);
-            ItemStack icon = cachedIcons.get(i);
-            if (!icon.isEmpty()) {
-                lineWidth += ICON_SIZE + ICON_TEXT_GAP;
+        applyAnimationStep();
+
+        int contentWidth = Math.max(
+            textRenderer.getWidth(TITLE_LINE),
+            textRenderer.getWidth("Y: " + cachedY)
+        );
+        boolean showIcons = Boolean.TRUE.equals(config.showOreIcons);
+        for (AnimatedOreRow row : animatedRows) {
+            int rowWidth = textRenderer.getWidth(row.label);
+            if (showIcons) {
+                rowWidth += ICON_SIZE + ICON_TEXT_GAP;
             }
-            contentWidth = Math.max(contentWidth, lineWidth);
+            contentWidth = Math.max(contentWidth, rowWidth);
         }
 
         int x = config.hudX;
         int y = config.hudY;
-        int lineHeight = Math.max(textRenderer.fontHeight, ICON_SIZE) + 2;
-        int height = (lineHeight * cachedLines.size()) + 4;
+        int height = (lineHeight * (HEADER_LINE_COUNT + animatedRows.size())) + 4;
         int width = contentWidth + 8;
 
         context.fill(x, y, x + width, y + height, BG_COLOR);
 
-        for (int i = 0; i < cachedLines.size(); i++) {
-            int rowTop = y + 2 + (i * lineHeight);
-            int textY = rowTop + ((lineHeight - textRenderer.fontHeight) / 2);
-            int textX = x + 4;
+        drawTextLine(context, textRenderer, x, y + 2, lineHeight, TITLE_LINE);
+        drawTextLine(context, textRenderer, x, y + 2 + lineHeight, lineHeight, "Y: " + cachedY);
 
-            ItemStack icon = cachedIcons.get(i);
-            if (!icon.isEmpty()) {
+        renderRows.clear();
+        renderRows.addAll(animatedRows);
+        renderRows.sort(Comparator.comparingDouble(row -> row.currentIndex));
+        for (AnimatedOreRow row : renderRows) {
+            float rowTopFloat = y + 2 + ((HEADER_LINE_COUNT + row.currentIndex) * lineHeight);
+            int rowTop = Math.round(rowTopFloat);
+            int textX = x + 4;
+            int textY = rowTop + ((lineHeight - textRenderer.fontHeight) / 2);
+
+            if (showIcons) {
                 int iconY = rowTop + ((lineHeight - ICON_SIZE) / 2);
-                context.drawItem(icon, textX, iconY);
+                context.drawItem(row.icon, textX, iconY);
                 textX += ICON_SIZE + ICON_TEXT_GAP;
             }
-
-            context.drawText(textRenderer, Text.literal(cachedLines.get(i)), textX, textY, TEXT_COLOR, false);
+            context.drawText(textRenderer, Text.literal(row.label), textX, textY, TEXT_COLOR, false);
         }
     }
 
     private void rebuildLines() {
-        cachedLines.clear();
-        cachedIcons.clear();
-        cachedLines.add("Ore Height Indicator");
-        cachedIcons.add(ItemStack.EMPTY);
-        cachedLines.add("Y: " + cachedY);
-        cachedIcons.add(ItemStack.EMPTY);
-
+        List<AnimatedOreRow> nextRows = new ArrayList<>();
         int count = 0;
         for (OreProbabilityService.OreChance chance : probabilityService.sortedChances()) {
             if (count >= config.maxEntries) {
@@ -100,10 +108,24 @@ public final class OreHudRenderer {
             if (chance.percent() <= 0.0f) {
                 continue;
             }
-            cachedLines.add(String.format(Locale.ROOT, "%s: %.1f%%", chance.oreName(), chance.percent()));
-            cachedIcons.add(iconForOre(chance.oreName()));
+
+            String oreName = chance.oreName();
+            String label = String.format(Locale.ROOT, "%s: %.1f%%", oreName, chance.percent());
+            AnimatedOreRow existing = findAnimatedRow(oreName);
+
+            if (existing == null) {
+                existing = new AnimatedOreRow(oreName, label, iconForOre(oreName), count);
+            } else {
+                existing.label = label;
+                existing.icon = iconForOre(oreName);
+            }
+            existing.targetIndex = count;
+            nextRows.add(existing);
             count++;
         }
+
+        animatedRows.clear();
+        animatedRows.addAll(nextRows);
     }
 
     private static ItemStack iconForOre(String oreName) {
@@ -118,5 +140,59 @@ public final class OreHudRenderer {
             case "Emerald" -> new ItemStack(Items.EMERALD_ORE);
             default -> ItemStack.EMPTY;
         };
+    }
+
+    private AnimatedOreRow findAnimatedRow(String oreName) {
+        for (AnimatedOreRow row : animatedRows) {
+            if (row.oreName.equals(oreName)) {
+                return row;
+            }
+        }
+        return null;
+    }
+
+    private void applyAnimationStep() {
+        if (!Boolean.TRUE.equals(config.animateReorder)) {
+            for (AnimatedOreRow row : animatedRows) {
+                row.currentIndex = row.targetIndex;
+            }
+            lastRenderNanos = 0L;
+            return;
+        }
+
+        long now = System.nanoTime();
+        if (lastRenderNanos == 0L) {
+            lastRenderNanos = now;
+            return;
+        }
+
+        float deltaSeconds = (now - lastRenderNanos) / 1_000_000_000.0f;
+        lastRenderNanos = now;
+        float alpha = Math.min(1.0f, Math.max(0.0f, deltaSeconds * REORDER_ANIMATION_SPEED));
+
+        for (AnimatedOreRow row : animatedRows) {
+            row.currentIndex = row.currentIndex + ((row.targetIndex - row.currentIndex) * alpha);
+        }
+    }
+
+    private static void drawTextLine(DrawContext context, TextRenderer textRenderer, int x, int rowTop, int lineHeight, String line) {
+        int textY = rowTop + ((lineHeight - textRenderer.fontHeight) / 2);
+        context.drawText(textRenderer, Text.literal(line), x + 4, textY, TEXT_COLOR, false);
+    }
+
+    private static final class AnimatedOreRow {
+        private final String oreName;
+        private String label;
+        private ItemStack icon;
+        private float currentIndex;
+        private float targetIndex;
+
+        private AnimatedOreRow(String oreName, String label, ItemStack icon, int startIndex) {
+            this.oreName = oreName;
+            this.label = label;
+            this.icon = icon;
+            this.currentIndex = startIndex;
+            this.targetIndex = startIndex;
+        }
     }
 }

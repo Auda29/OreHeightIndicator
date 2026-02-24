@@ -47,6 +47,22 @@ public final class ModMenuIntegration implements ModMenuApi {
                     .build()
             );
 
+            hud.addEntry(
+                entries.startBooleanToggle(Text.literal("Show Ore Icons"), Boolean.TRUE.equals(config.showOreIcons))
+                    .setDefaultValue(true)
+                    .setTooltip(Text.literal("Show or hide ore item icons for each HUD row."))
+                    .setSaveConsumer(value -> config.showOreIcons = value)
+                    .build()
+            );
+
+            hud.addEntry(
+                entries.startBooleanToggle(Text.literal("Animate Reorder"), Boolean.TRUE.equals(config.animateReorder))
+                    .setDefaultValue(true)
+                    .setTooltip(Text.literal("Smooth row movement when ore ranking changes."))
+                    .setSaveConsumer(value -> config.animateReorder = value)
+                    .build()
+            );
+
             data.addEntry(
                 entries.startIntField(Text.literal("Update Interval (ticks)"), config.updateIntervalTicks)
                     .setDefaultValue(6)

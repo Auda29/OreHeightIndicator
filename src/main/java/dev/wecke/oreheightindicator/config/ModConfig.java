@@ -22,6 +22,8 @@ public final class ModConfig {
     public int updateIntervalTicks = 6;
     public int maxEntries = 6;
     public boolean useDynamicProvider = false;
+    public Boolean showOreIcons = true;
+    public Boolean animateReorder = true;
 
     public static ModConfig load() {
         if (!Files.exists(CONFIG_PATH)) {
@@ -70,5 +72,11 @@ public final class ModConfig {
         maxEntries = Math.max(1, maxEntries);
         hudX = Math.max(0, hudX);
         hudY = Math.max(0, hudY);
+        if (showOreIcons == null) {
+            showOreIcons = true;
+        }
+        if (animateReorder == null) {
+            animateReorder = true;
+        }
     }
 }

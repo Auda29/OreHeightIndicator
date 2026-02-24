@@ -50,29 +50,30 @@
             "title": "Animate rank changes in HUD list",
             "description": "Animate vertical transitions when ore order changes instead of instant row swapping.",
             "details": "",
-            "status": "in-progress",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 2,
             "parentId": "undefined",
-            "updatedAt": "2026-02-24T12:47:38.307Z"
+            "updatedAt": "2026-02-24T12:51:25.407Z"
           },
           {
             "id": 4,
             "title": "Add configurable HUD scale in Mod Menu",
             "description": "Add UI scale setting in config menu and apply scale transform in HUD rendering.",
             "details": "",
-            "status": "pending",
+            "status": "in-progress",
             "dependencies": [],
             "parentTaskId": 2,
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2026-02-24T12:51:28.631Z"
           }
         ],
-        "updatedAt": "2026-02-24T12:47:38.307Z"
+        "updatedAt": "2026-02-24T12:51:28.631Z"
       }
     ],
     "metadata": {
       "version": "1.0.0",
-      "lastModified": "2026-02-24T12:47:38.308Z",
+      "lastModified": "2026-02-24T12:51:28.632Z",
       "taskCount": 2,
       "completedCount": 1,
       "tags": [
