@@ -1,37 +1,83 @@
 {
-  "tasks": [
-    {
-      "id": "1",
-      "title": "Bootstrap cursor-first workflow",
-      "description": "Validate Taskmaster command flow in this repository.",
-      "status": "done",
-      "dependencies": [],
-      "priority": "high",
-      "details": "Use this seed task to verify list/next/show/set-status commands.",
-      "testStrategy": "Run task-master list, task-master next, task-master show 1, then set-status to done.",
-      "updatedAt": "2026-02-23T18:59:04.305Z",
-      "subtasks": []
-    },
-    {
-      "id": "2",
-      "title": "Create first feature PRD",
-      "description": "Create and parse a small PRD to exercise the planning flow.",
-      "status": "in-progress",
-      "dependencies": [],
-      "priority": "medium",
-      "details": "Create a PRD in `.taskmaster/docs/` and run `task-master parse-prd --input=<file>`.",
-      "testStrategy": "Confirm tasks are generated and `task-master next` returns a workable item.",
-      "subtasks": [],
-      "updatedAt": "2026-02-24T10:30:31.421Z"
+  "master": {
+    "tasks": [
+      {
+        "id": "1",
+        "title": "Bootstrap cursor-first workflow",
+        "description": "Validate Taskmaster command flow in this repository.",
+        "status": "done",
+        "dependencies": [],
+        "priority": "high",
+        "details": "Use this seed task to verify list/next/show/set-status commands.",
+        "testStrategy": "Run task-master list, task-master next, task-master show 1, then set-status to done.",
+        "updatedAt": "2026-02-23T18:59:04.305Z",
+        "subtasks": []
+      },
+      {
+        "id": "2",
+        "title": "Create first feature PRD",
+        "description": "Create and parse a small PRD to exercise the planning flow.",
+        "status": "in-progress",
+        "dependencies": [],
+        "priority": "medium",
+        "details": "Create a PRD in `.taskmaster/docs/` and run `task-master parse-prd --input=<file>`.",
+        "testStrategy": "Confirm tasks are generated and `task-master next` returns a workable item.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Calibrate ore distribution from wiki data",
+            "description": "Replace simplified static ore curves with wiki-derived distribution data and validate in-game before any further UI work.",
+            "details": "",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 2,
+            "updatedAt": "2026-02-24T12:43:53.647Z",
+            "parentId": "undefined"
+          },
+          {
+            "id": 2,
+            "title": "Add ore icons per HUD entry",
+            "description": "Render ore-specific icons next to each ore row in the HUD, with minimal render overhead.",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 2,
+            "parentId": "undefined",
+            "updatedAt": "2026-02-24T12:47:35.010Z"
+          },
+          {
+            "id": 3,
+            "title": "Animate rank changes in HUD list",
+            "description": "Animate vertical transitions when ore order changes instead of instant row swapping.",
+            "details": "",
+            "status": "in-progress",
+            "dependencies": [],
+            "parentTaskId": 2,
+            "parentId": "undefined",
+            "updatedAt": "2026-02-24T12:47:38.307Z"
+          },
+          {
+            "id": 4,
+            "title": "Add configurable HUD scale in Mod Menu",
+            "description": "Add UI scale setting in config menu and apply scale transform in HUD rendering.",
+            "details": "",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 2,
+            "parentId": "undefined"
+          }
+        ],
+        "updatedAt": "2026-02-24T12:47:38.307Z"
+      }
+    ],
+    "metadata": {
+      "version": "1.0.0",
+      "lastModified": "2026-02-24T12:47:38.308Z",
+      "taskCount": 2,
+      "completedCount": 1,
+      "tags": [
+        "master"
+      ]
     }
-  ],
-  "metadata": {
-    "version": "1.0.0",
-    "lastModified": "2026-02-24T10:30:31.422Z",
-    "taskCount": 2,
-    "completedCount": 1,
-    "tags": [
-      "master"
-    ]
   }
 }
