@@ -28,10 +28,10 @@
             "title": "Calibrate ore distribution from wiki data",
             "description": "Replace simplified static ore curves with wiki-derived distribution data and validate in-game before any further UI work.",
             "details": "",
-            "status": "pending",
+            "status": "in-progress",
             "dependencies": [],
             "parentTaskId": 2,
-            "updatedAt": "2026-02-24T12:43:53.647Z",
+            "updatedAt": "2026-02-24T13:25:45.656Z",
             "parentId": "undefined"
           },
           {
@@ -68,12 +68,12 @@
             "updatedAt": "2026-02-24T13:00:04.804Z"
           }
         ],
-        "updatedAt": "2026-02-24T13:00:04.804Z"
+        "updatedAt": "2026-02-24T13:25:45.656Z"
       }
     ],
     "metadata": {
       "version": "1.0.0",
-      "lastModified": "2026-02-24T13:00:04.805Z",
+      "lastModified": "2026-02-24T13:25:45.658Z",
       "taskCount": 2,
       "completedCount": 1,
       "tags": [

@@ -4,15 +4,40 @@ public final class StaticVanilla1211Provider implements OreDataProvider {
     private static final int MIN_Y = -64;
     private static final int MAX_Y = 320;
 
-    private static final Curve[] CURVES = new Curve[] {
-        new Curve("Coal", 0, 320, 180, 1.0f),
-        new Curve("Copper", -16, 112, 48, 0.9f),
-        new Curve("Iron", -24, 256, 16, 0.95f),
-        new Curve("Gold", -64, 48, -16, 0.8f),
-        new Curve("Redstone", -64, 16, -48, 1.0f),
-        new Curve("Lapis", -64, 64, 0, 0.8f),
-        new Curve("Diamond", -64, 16, -56, 1.0f),
-        new Curve("Emerald", -16, 320, 224, 0.85f)
+    private static final OreCurve[] CURVES = new OreCurve[] {
+        // Wiki-based approximations from https://minecraft.wiki/w/Ore and /Ore_(feature)
+        // for Java 1.21.x static baseline (overworld, biome-agnostic).
+        new OreCurve("Coal", 1.0f,
+            Source.triangle(0, 192, 96, 0.65f),
+            Source.uniform(136, 320, 0.35f)
+        ),
+        new OreCurve("Copper", 0.9f,
+            Source.triangle(-16, 112, 48, 1.0f)
+        ),
+        new OreCurve("Iron", 0.95f,
+            Source.uniform(-64, 72, 0.45f),
+            Source.triangle(-24, 56, 16, 0.35f),
+            Source.triangle(80, 320, 200, 0.20f)
+        ),
+        new OreCurve("Gold", 0.8f,
+            Source.triangle(-64, 32, -16, 0.75f),
+            Source.uniform(-64, -48, 0.25f)
+        ),
+        new OreCurve("Redstone", 1.0f,
+            Source.uniform(-64, 15, 0.55f),
+            Source.triangle(-64, -32, -48, 0.45f)
+        ),
+        new OreCurve("Lapis", 0.8f,
+            Source.triangle(-32, 32, 0, 0.65f),
+            Source.uniform(-64, 64, 0.35f)
+        ),
+        new OreCurve("Diamond", 1.0f,
+            Source.triangle(-64, 16, -56, 0.80f),
+            Source.uniform(-64, -4, 0.20f)
+        ),
+        new OreCurve("Emerald", 0.85f,
+            Source.triangle(-16, 320, 85, 1.0f)
+        )
     };
 
     @Override
@@ -43,38 +68,75 @@ public final class StaticVanilla1211Provider implements OreDataProvider {
         }
     }
 
-    private static final class Curve {
+    private static final class OreCurve {
         private final String name;
+        private final float peakScore;
+        private final Source[] sources;
+
+        private OreCurve(String name, float peakScore, Source... sources) {
+            this.name = name;
+            this.peakScore = peakScore;
+            this.sources = sources;
+        }
+
+        private float scoreAt(int y) {
+            float sum = 0.0f;
+            for (Source source : sources) {
+                sum += source.scoreAt(y);
+            }
+            if (sum <= 0.0f) {
+                return 0.0f;
+            }
+            return Math.min(peakScore, sum);
+        }
+    }
+
+    private enum Shape {
+        TRIANGLE,
+        UNIFORM
+    }
+
+    private static final class Source {
+        private final Shape shape;
         private final int min;
         private final int max;
         private final int peak;
-        private final float peakScore;
+        private final float weight;
 
-        private Curve(String name, int min, int max, int peak, float peakScore) {
-            this.name = name;
+        private Source(Shape shape, int min, int max, int peak, float weight) {
+            this.shape = shape;
             this.min = min;
             this.max = max;
             this.peak = peak;
-            this.peakScore = peakScore;
+            this.weight = weight;
+        }
+
+        private static Source triangle(int min, int max, int peak, float weight) {
+            return new Source(Shape.TRIANGLE, min, max, peak, weight);
+        }
+
+        private static Source uniform(int min, int max, float weight) {
+            return new Source(Shape.UNIFORM, min, max, 0, weight);
         }
 
         private float scoreAt(int y) {
             if (y < min || y > max) {
                 return 0.0f;
             }
-            if (peak <= min || peak >= max) {
-                return peakScore;
+            if (shape == Shape.UNIFORM) {
+                return weight;
             }
-
-            if (y == peak) {
-                return peakScore;
+            if (peak <= min || peak >= max) {
+                return weight;
             }
 
             float value;
-            if (y < peak) {
-                value = peakScore * ((float) (y - min) / (float) (peak - min));
+            if (y == peak) {
+                value = weight;
+            } else if (y < peak) {
+                value = weight * ((float) (y - min) / (float) (peak - min));
             } else {
-                value = peakScore * ((float) (max - y) / (float) (max - peak));
+                value = weight * ((float) (max - y) / (float) (max - peak));
             }
             return Math.max(0.0f, value);
         }

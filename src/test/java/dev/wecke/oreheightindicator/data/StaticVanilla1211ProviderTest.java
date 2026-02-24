@@ -43,69 +43,58 @@ class StaticVanilla1211ProviderTest {
     }
 
     @Test
-    void fillScoresReturnsExpectedPeakValues() {
+    void deepLayerFavorsDiamondAndRedstoneOverSurfaceOres() {
         StaticVanilla1211Provider provider = new StaticVanilla1211Provider();
         float[] out = new float[provider.oreCount()];
 
-        provider.fillScores(180, out);
-        assertEquals(1.0f, out[0], 1.0e-6f);
-        provider.fillScores(48, out);
-        assertEquals(0.9f, out[1], 1.0e-6f);
-        provider.fillScores(16, out);
-        assertEquals(0.95f, out[2], 1.0e-6f);
-        provider.fillScores(-16, out);
-        assertEquals(0.8f, out[3], 1.0e-6f);
         provider.fillScores(-48, out);
-        assertEquals(1.0f, out[4], 1.0e-6f);
-        provider.fillScores(0, out);
-        assertEquals(0.8f, out[5], 1.0e-6f);
-        provider.fillScores(-56, out);
-        assertEquals(1.0f, out[6], 1.0e-6f);
-        provider.fillScores(224, out);
-        assertEquals(0.85f, out[7], 1.0e-6f);
-    }
-
-    @Test
-    void fillScoresReturnsZeroAtConfiguredBoundaries() {
-        StaticVanilla1211Provider provider = new StaticVanilla1211Provider();
-        float[] out = new float[provider.oreCount()];
-
-        provider.fillScores(0, out);
-        assertEquals(0.0f, out[0], 1.0e-6f);
-        provider.fillScores(320, out);
-        assertEquals(0.0f, out[0], 1.0e-6f);
-
-        provider.fillScores(-16, out);
-        assertEquals(0.0f, out[1], 1.0e-6f);
-        provider.fillScores(112, out);
-        assertEquals(0.0f, out[1], 1.0e-6f);
-    }
-
-    @Test
-    void fillScoresMatchesKnownMidpointSamples() {
-        StaticVanilla1211Provider provider = new StaticVanilla1211Provider();
-        float[] out = new float[provider.oreCount()];
-
-        provider.fillScores(90, out);
-        assertEquals(0.5f, out[0], 1.0e-6f);
-        provider.fillScores(250, out);
-        assertEquals(0.5f, out[0], 1.0e-6f);
-
-        provider.fillScores(-32, out);
-        assertEquals(0.4f, out[5], 1.0e-6f);
-        provider.fillScores(32, out);
-        assertEquals(0.4f, out[5], 1.0e-6f);
-    }
-
-    @Test
-    void yNegative56PrioritizesDiamondOverSurfaceOres() {
-        StaticVanilla1211Provider provider = new StaticVanilla1211Provider();
-        float[] out = new float[provider.oreCount()];
-        provider.fillScores(-56, out);
-
-        float diamond = out[6];
         float coal = out[0];
+        float redstone = out[4];
+        float diamond = out[6];
+
+        assertTrue(redstone > coal);
         assertTrue(diamond > coal);
-        assertEquals(1.0f, diamond, 1.0e-6f);
+    }
+
+    @Test
+    void midLayerFavorsCopperAndIronOverDiamond() {
+        StaticVanilla1211Provider provider = new StaticVanilla1211Provider();
+        float[] out = new float[provider.oreCount()];
+
+        provider.fillScores(48, out);
+        float copper = out[1];
+        float iron = out[2];
+        float diamond = out[6];
+
+        assertTrue(copper > diamond);
+        assertTrue(iron > diamond);
+    }
+
+    @Test
+    void highLayerFavorsCoalAndEmeraldOverDeepOres() {
+        StaticVanilla1211Provider provider = new StaticVanilla1211Provider();
+        float[] out = new float[provider.oreCount()];
+
+        provider.fillScores(200, out);
+        float coal = out[0];
+        float redstone = out[4];
+        float diamond = out[6];
+        float emerald = out[7];
+
+        assertTrue(coal > redstone);
+        assertTrue(coal > diamond);
+        assertTrue(emerald > redstone);
+    }
+
+    @Test
+    void goldStopsAtHigherYLevels() {
+        StaticVanilla1211Provider provider = new StaticVanilla1211Provider();
+        float[] out = new float[provider.oreCount()];
+
+        provider.fillScores(120, out);
+        assertEquals(0.0f, out[3], 1.0e-6f);
+
+        provider.fillScores(-56, out);
+        assertTrue(out[3] > 0.0f);
     }
 }
