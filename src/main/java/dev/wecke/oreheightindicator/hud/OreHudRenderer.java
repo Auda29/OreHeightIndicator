@@ -5,6 +5,7 @@ import dev.wecke.oreheightindicator.data.OreProbabilityService;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.text.Text;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,7 +59,7 @@ public final class OreHudRenderer {
 
         int textY = y + 2;
         for (String line : cachedLines) {
-            context.drawText(textRenderer, line, x + 4, textY, TEXT_COLOR, false);
+            context.drawText(textRenderer, Text.literal(line), x + 4, textY, TEXT_COLOR, false);
             textY += lineHeight;
         }
     }
