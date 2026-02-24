@@ -23,7 +23,7 @@ public final class OreHeightIndicatorClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        config = ModConfig.load();
+        config = ModConfig.getCurrent();
 
         OreDataProvider provider = config.useDynamicProvider
             ? new DynamicWorldgenProviderStub()

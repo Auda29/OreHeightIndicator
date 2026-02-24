@@ -11,6 +11,9 @@
   "entrypoints": {
     "client": [
       "dev.wecke.oreheightindicator.OreHeightIndicatorClient"
+    ],
+    "modmenu": [
+      "dev.wecke.oreheightindicator.config.ModMenuIntegration"
     ]
   },
   "depends": {
@@ -18,5 +21,8 @@
     "minecraft": "1.21.1",
     "java": ">=21",
     "fabric-api": "*"
+  },
+  "suggests": {
+    "modmenu": "*"
   }
 }

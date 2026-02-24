@@ -27,6 +27,12 @@
    - Toggle HUD and restart game.
    - Pass: previous `hudEnabled` state is retained in `.minecraft/config/oreheightindicator.json`.
 
+5. Mod Menu config screen
+   - Open Mod Menu -> select `Ore Height Indicator` -> click `Config`.
+   - Change `HUD X`, `HUD Y`, `Update Interval (ticks)`, and `Max Ore Entries`.
+   - Click `Done` to save.
+   - Pass: values are written to `.minecraft/config/oreheightindicator.json` and apply after returning to world (or restart for provider mode change).
+
 ## Performance Checks
 
 1. Idle stability

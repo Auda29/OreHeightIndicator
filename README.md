@@ -5,6 +5,7 @@ Client-side Fabric Mod fuer Minecraft `1.21.1`, die im HUD die aktuelle Hoehe (Y
 ## Features (aktueller Stand)
 
 - HUD mit Toggle-Keybind (`H`)
+- Mod Menu + Cloth Config Einstellungsbildschirm
 - Anzeige der aktuellen Spielerhoehe (`Y`)
 - Sortierte Ore-Liste mit Prozentwerten (relativer Score je Hoehe)
 - Performance-schonendes Update-Verhalten:
@@ -35,10 +36,8 @@ Client-side Fabric Mod fuer Minecraft `1.21.1`, die im HUD die aktuelle Hoehe (Y
 
 ### Build lokal
 
-Hinweis: Aktuell ist noch kein Gradle Wrapper (`gradlew`) im Repo. Du brauchst daher lokal installiertes `gradle`.
-
 ```bash
-gradle build
+./gradlew build
 ```
 
 Das Build-Artifact liegt danach in `build/libs/`.
@@ -52,6 +51,11 @@ Das Build-Artifact liegt danach in `build/libs/`.
 ## Konfiguration
 
 Datei: `.minecraft/config/oreheightindicator.json` (wird beim ersten Start erzeugt)
+
+Konfiguration ist auf zwei Wegen moeglich:
+
+- Ingame ueber **Mod Menu** -> Ore Height Indicator -> Config
+- Direkt per Datei: `.minecraft/config/oreheightindicator.json`
 
 Relevante Felder:
 

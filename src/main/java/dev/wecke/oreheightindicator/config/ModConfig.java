@@ -14,6 +14,7 @@ import java.nio.file.Path;
 public final class ModConfig {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Path CONFIG_PATH = FabricLoader.getInstance().getConfigDir().resolve("oreheightindicator.json");
+    private static ModConfig current;
 
     public boolean hudEnabled = true;
     public int hudX = 8;
@@ -26,6 +27,7 @@ public final class ModConfig {
         if (!Files.exists(CONFIG_PATH)) {
             ModConfig config = new ModConfig();
             config.save();
+            current = config;
             return config;
         }
 
@@ -35,12 +37,21 @@ public final class ModConfig {
                 config = new ModConfig();
             }
             config.sanitize();
+            current = config;
             return config;
         } catch (IOException | JsonParseException ignored) {
             ModConfig config = new ModConfig();
             config.save();
+            current = config;
             return config;
         }
+    }
+
+    public static ModConfig getCurrent() {
+        if (current == null) {
+            current = load();
+        }
+        return current;
     }
 
     public void save() {
