@@ -1,0 +1,18 @@
+# Example PRD
+
+## Goal
+Add a minimal status dashboard that shows current task health.
+
+## Scope
+- Read current tasks from `.taskmaster/tasks/tasks.json`.
+- Render a summary view with pending, in-progress, and done counts.
+- Include a simple command to refresh status output.
+
+## Non-Goals
+- No external API integration.
+- No authentication.
+
+## Success Criteria
+- Dashboard command runs locally.
+- Status counts match task data.
+- Documentation is updated.

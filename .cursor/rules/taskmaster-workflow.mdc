@@ -1,0 +1,28 @@
+---
+description: Standard Taskmaster command workflow for execution
+alwaysApply: true
+---
+
+# Taskmaster Workflow
+
+- **Session Start**
+  - Begin by listing tasks and checking the next available item.
+  - Inspect full task details before implementation.
+
+- **Execution Loop**
+  - For complex work, expand the task into subtasks first.
+  - Set the active item to in-progress before coding.
+  - Log implementation progress in subtask updates.
+
+- **Status Hygiene**
+  - Mark completed items as done immediately after validation.
+  - Keep blocked work visible through accurate task status updates.
+  - Update upcoming tasks when implementation decisions drift from plan.
+
+- **Default Command Sequence**
+  - `task-master list --with-subtasks`
+  - `task-master next`
+  - `task-master show <id>`
+  - `task-master expand --id=<id> --research` (as needed)
+  - `task-master update-subtask --id=<id> --prompt="<notes>"`
+  - `task-master set-status --id=<id> --status=done`

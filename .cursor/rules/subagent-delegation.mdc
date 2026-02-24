@@ -1,0 +1,27 @@
+---
+description: When and how to delegate work to subagents
+alwaysApply: true
+---
+
+# Subagent Delegation
+
+- **When to Delegate**
+  - Delegate when a task spans more than three files or multiple concerns.
+  - Delegate for parallelizable discovery, testing strategy, and documentation impact.
+  - Keep simple single-file fixes in the primary agent.
+
+- **Role Contracts**
+  - Scout: returns impact map, touched files, dependencies, and risks.
+  - Implementer: returns focused diff-ready implementation steps.
+  - Tester: returns coverage gaps, test matrix, and regression risks.
+  - Doc: returns required documentation updates and ADR recommendation.
+
+- **Parallelism Rules**
+  - Use parallel subagents for independent tracks.
+  - Use sequential delegation when one output is input for the next step.
+  - Cap concurrent subagents to the configured maximum.
+
+- **Output Requirements**
+  - Every subagent output includes assumptions, concrete paths, and next actions.
+  - No subagent should perform unrelated refactors.
+  - Primary agent consolidates decisions and owns final patch quality.

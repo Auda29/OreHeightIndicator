@@ -1,0 +1,8 @@
+{
+  "cursor.agent.maxParallelSubagents": 4,
+  "cursor.agent.skillsPath": ".cursor/skills/SKILL.md",
+  "cursor.agent.mcpAutoConnect": true,
+  "cursor.agent.defaultModel": "claude-sonnet-4",
+  "cursor.agent.reviewBeforeApply": true,
+  "cursor.agent.commitOnSuccess": false
+}

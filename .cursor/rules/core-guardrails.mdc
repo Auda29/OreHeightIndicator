@@ -1,0 +1,25 @@
+---
+description: Core project guardrails for all agent work
+alwaysApply: true
+---
+
+# Core Guardrails
+
+- **Scope Discipline**
+  - Deliver only the requested change.
+  - Avoid drive-by refactors and unrelated cleanup.
+  - If you spot unrelated issues, document them separately.
+
+- **Quality and Verification**
+  - Every code change includes matching tests where applicable.
+  - Run project lint, tests, and type checks before completion when commands exist.
+  - Resolve failures before adding more changes.
+
+- **Security and Secrets**
+  - Never commit credentials, tokens, private keys, or generated secret files.
+  - Prefer safe defaults and explicit validation on user input boundaries.
+
+- **Change Management**
+  - Use one logical change per PR.
+  - Follow Conventional Commits for commit messages.
+  - Use the repository PR template for every pull request.

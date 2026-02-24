@@ -1,0 +1,12 @@
+# skills.lock.example
+#
+# Example lock format for skills.
+
+skills:
+  "example/review-pr":
+    version: "1.0.0"
+    resolved: "https://example.com/review-pr/v1.0.0"
+    integrity: "sha512-..."
+
+last_updated: "2026-01-27T10:00:00Z"
+updated_by: "agent/bootstrap"

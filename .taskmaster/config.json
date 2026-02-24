@@ -1,0 +1,10 @@
+{
+  "projectName": "Agent_Stack",
+  "projectDescription": "Cursor-first agent workflow skeleton",
+  "projectVersion": "0.1.0",
+  "defaultSubtasks": 5,
+  "defaultPriority": "medium",
+  "global": {
+    "defaultTag": "master"
+  }
+}

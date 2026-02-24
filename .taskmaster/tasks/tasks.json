@@ -1,0 +1,36 @@
+{
+  "tasks": [
+    {
+      "id": "1",
+      "title": "Bootstrap cursor-first workflow",
+      "description": "Validate Taskmaster command flow in this repository.",
+      "status": "done",
+      "dependencies": [],
+      "priority": "high",
+      "details": "Use this seed task to verify list/next/show/set-status commands.",
+      "testStrategy": "Run task-master list, task-master next, task-master show 1, then set-status to done.",
+      "updatedAt": "2026-02-23T18:59:04.305Z",
+      "subtasks": []
+    },
+    {
+      "id": "2",
+      "title": "Create first feature PRD",
+      "description": "Create and parse a small PRD to exercise the planning flow.",
+      "status": "pending",
+      "dependencies": [],
+      "priority": "medium",
+      "details": "Create a PRD in `.taskmaster/docs/` and run `task-master parse-prd --input=<file>`.",
+      "testStrategy": "Confirm tasks are generated and `task-master next` returns a workable item.",
+      "subtasks": []
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0",
+    "lastModified": "2026-02-23T19:20:00.000Z",
+    "taskCount": 2,
+    "completedCount": 1,
+    "tags": [
+      "master"
+    ]
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "version": "2.0.0",
+  "inputs": [
+    {
+      "id": "taskId",
+      "type": "promptString",
+      "description": "Task ID (e.g. 1 or 2.1)"
+    },
+    {
+      "id": "taskStatus",
+      "type": "pickString",
+      "description": "Task status",
+      "options": [
+        "pending",
+        "in-progress",
+        "done",
+        "review",
+        "deferred",
+        "cancelled"
+      ]
+    },
+    {
+      "id": "subtaskId",
+      "type": "promptString",
+      "description": "Subtask ID for update-subtask (e.g. 1.1)"
+    },
+    {
+      "id": "subtaskNotes",
+      "type": "promptString",
+      "description": "Progress notes to append"
+    }
+  ],
+  "tasks": [
+    {
+      "label": "Taskmaster: List",
+      "type": "shell",
+      "command": "task-master list --with-subtasks",
+      "problemMatcher": []
+    },
+    {
+      "label": "Taskmaster: Next",
+      "type": "shell",
+      "command": "task-master next",
+      "problemMatcher": []
+    },
+    {
+      "label": "Taskmaster: Show Task",
+      "type": "shell",
+      "command": "task-master show ${input:taskId}",
+      "problemMatcher": []
+    },
+    {
+      "label": "Taskmaster: Expand Task",
+      "type": "shell",
+      "command": "task-master expand --id=${input:taskId} --research",
+      "problemMatcher": []
+    },
+    {
+      "label": "Taskmaster: Set Status",
+      "type": "shell",
+      "command": "task-master set-status --id=${input:taskId} --status=${input:taskStatus}",
+      "problemMatcher": []
+    },
+    {
+      "label": "Taskmaster: Update Subtask",
+      "type": "shell",
+      "command": "task-master update-subtask --id=${input:subtaskId} --prompt=\"${input:subtaskNotes}\"",
+      "problemMatcher": []
+    }
+  ]
+}

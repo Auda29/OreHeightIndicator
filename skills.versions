@@ -1,0 +1,4 @@
+# skills.versions
+#
+# This file pins skill versions used in this project.
+# Format: <source>/<skill-name>@<version>

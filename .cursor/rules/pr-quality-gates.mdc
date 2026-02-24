@@ -1,0 +1,23 @@
+---
+description: Pull request quality gates and delivery checks
+alwaysApply: true
+---
+
+# PR Quality Gates
+
+- **Required PR Content**
+  - Include summary, motivation, test approach, risks, and rollback plan.
+  - Use the repository pull request template fields as the source of truth.
+
+- **Verification Requirements**
+  - Confirm lint, tests, and type checks pass for changed scope.
+  - Provide manual verification steps when behavior is user-facing.
+  - Document any known limitation and mitigation.
+
+- **Documentation Bar**
+  - Update docs when workflows, commands, or interfaces change.
+  - Add ADR notes when architecture boundaries or invariants change.
+
+- **Release Safety**
+  - Highlight backward compatibility risks and migration notes.
+  - Include a concrete rollback strategy for operational changes.
