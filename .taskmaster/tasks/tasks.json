@@ -16,17 +16,18 @@
       "id": "2",
       "title": "Create first feature PRD",
       "description": "Create and parse a small PRD to exercise the planning flow.",
-      "status": "pending",
+      "status": "in-progress",
       "dependencies": [],
       "priority": "medium",
       "details": "Create a PRD in `.taskmaster/docs/` and run `task-master parse-prd --input=<file>`.",
       "testStrategy": "Confirm tasks are generated and `task-master next` returns a workable item.",
-      "subtasks": []
+      "subtasks": [],
+      "updatedAt": "2026-02-24T10:30:31.421Z"
     }
   ],
   "metadata": {
     "version": "1.0.0",
-    "lastModified": "2026-02-23T19:20:00.000Z",
+    "lastModified": "2026-02-24T10:30:31.422Z",
     "taskCount": 2,
     "completedCount": 1,
     "tags": [

@@ -1,0 +1,35 @@
+# Ore Height Indicator PRD (Fabric 1.21.1)
+
+## Goal
+Build a client-side Fabric mod for Minecraft 1.21.1 that shows the current Y-level and likely ores with percentages for mining decisions.
+
+## Core UX (MVP)
+- Toggle a compact HUD with a keybind (default `H`).
+- Show current player Y-level.
+- Show top ores sorted by percentage at that Y-level.
+- Keep UI simple and readable during mining.
+
+## Data Strategy
+- Default provider: static vanilla 1.21.1 ore distribution curves.
+- Architecture must include a provider interface for future dynamic worldgen extraction.
+- Dynamic provider is out of MVP scope and disabled by default.
+
+## Performance Requirements
+- Recalculate at most every 5-10 ticks.
+- Skip recalculation when Y-level has not changed.
+- No heavy scans/registry traversal in render callback.
+- Minimize per-frame allocations in HUD rendering path.
+- Do no update work while HUD is hidden.
+
+## Non-Goals (MVP)
+- Biome-aware exact simulation.
+- Chunk scanning or ore detection.
+- Full worldgen parser for all datapacks/modpacks.
+- Complex configurable UI screens.
+
+## Success Criteria
+- Mod runs on Fabric + Minecraft 1.21.1.
+- HUD toggles on/off reliably.
+- Ore list updates while moving vertically.
+- FPS impact remains minimal and no visible stutter is introduced in normal mining movement.
+- Codebase is prepared for a future dynamic provider without refactoring HUD logic.
