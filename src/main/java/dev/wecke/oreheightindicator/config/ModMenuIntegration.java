@@ -33,7 +33,7 @@ public final class ModMenuIntegration implements ModMenuApi {
                 entries.startIntField(Text.literal("HUD X"), config.hudX)
                     .setDefaultValue(8)
                     .setMin(0)
-                    .setTooltip(Text.literal("Horizontal HUD offset in pixels from the left edge."))
+                    .setTooltip(Text.literal("Horizontal HUD offset in pixels from the right edge."))
                     .setSaveConsumer(value -> config.hudX = value)
                     .build()
             );
@@ -60,6 +60,16 @@ public final class ModMenuIntegration implements ModMenuApi {
                     .setDefaultValue(true)
                     .setTooltip(Text.literal("Smooth row movement when ore ranking changes."))
                     .setSaveConsumer(value -> config.animateReorder = value)
+                    .build()
+            );
+
+            hud.addEntry(
+                entries.startFloatField(Text.literal("UI Scale"), config.uiScale)
+                    .setDefaultValue(1.0f)
+                    .setMin(0.5f)
+                    .setMax(3.0f)
+                    .setTooltip(Text.literal("Scales the complete HUD size. 1.0 = default size."))
+                    .setSaveConsumer(value -> config.uiScale = value)
                     .build()
             );
 

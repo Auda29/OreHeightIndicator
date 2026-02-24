@@ -5,8 +5,8 @@ import dev.wecke.oreheightindicator.data.OreProbabilityService;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
 
 import java.util.ArrayList;
@@ -70,23 +70,34 @@ public final class OreHudRenderer {
             contentWidth = Math.max(contentWidth, rowWidth);
         }
 
-        int x = config.hudX;
-        int y = config.hudY;
         int height = (lineHeight * (HEADER_LINE_COUNT + animatedRows.size())) + 4;
         int width = contentWidth + 8;
 
-        context.fill(x, y, x + width, y + height, BG_COLOR);
+        float scale = config.uiScale != null ? config.uiScale : 1.0f;
+        scale = Math.max(0.5f, Math.min(3.0f, scale));
+        int visualWidth = Math.round(width * scale);
+        int y = config.hudY;
+        // Interpret HUD X as right-edge margin so default placement is top-right.
+        int x = Math.max(0, client.getWindow().getScaledWidth() - visualWidth - config.hudX);
 
-        drawTextLine(context, textRenderer, x, y + 2, lineHeight, TITLE_LINE);
-        drawTextLine(context, textRenderer, x, y + 2 + lineHeight, lineHeight, "Y: " + cachedY);
+        var matrices = context.getMatrices();
+        matrices.pushMatrix();
+        matrices.scale(scale, scale);
+
+        int scaledX = Math.round(x / scale);
+        int scaledY = Math.round(y / scale);
+        context.fill(scaledX, scaledY, scaledX + width, scaledY + height, BG_COLOR);
+
+        drawTextLine(context, textRenderer, scaledX, scaledY + 2, lineHeight, TITLE_LINE);
+        drawTextLine(context, textRenderer, scaledX, scaledY + 2 + lineHeight, lineHeight, "Y: " + cachedY);
 
         renderRows.clear();
         renderRows.addAll(animatedRows);
         renderRows.sort(Comparator.comparingDouble(row -> row.currentIndex));
         for (AnimatedOreRow row : renderRows) {
-            float rowTopFloat = y + 2 + ((HEADER_LINE_COUNT + row.currentIndex) * lineHeight);
+            float rowTopFloat = scaledY + 2 + ((HEADER_LINE_COUNT + row.currentIndex) * lineHeight);
             int rowTop = Math.round(rowTopFloat);
-            int textX = x + 4;
+            int textX = scaledX + 4;
             int textY = rowTop + ((lineHeight - textRenderer.fontHeight) / 2);
 
             if (showIcons) {
@@ -96,6 +107,8 @@ public final class OreHudRenderer {
             }
             context.drawText(textRenderer, Text.literal(row.label), textX, textY, TEXT_COLOR, false);
         }
+
+        matrices.popMatrix();
     }
 
     private void rebuildLines() {

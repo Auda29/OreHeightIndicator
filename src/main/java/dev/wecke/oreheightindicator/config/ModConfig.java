@@ -24,6 +24,7 @@ public final class ModConfig {
     public boolean useDynamicProvider = false;
     public Boolean showOreIcons = true;
     public Boolean animateReorder = true;
+    public Float uiScale = 1.0f;
 
     public static ModConfig load() {
         if (!Files.exists(CONFIG_PATH)) {
@@ -78,5 +79,9 @@ public final class ModConfig {
         if (animateReorder == null) {
             animateReorder = true;
         }
+        if (uiScale == null) {
+            uiScale = 1.0f;
+        }
+        uiScale = Math.max(0.5f, Math.min(3.0f, uiScale));
     }
 }
