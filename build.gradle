@@ -19,6 +19,7 @@ dependencies {
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+    testImplementation "org.junit.jupiter:junit-jupiter:5.11.4"
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -37,6 +38,10 @@ processResources {
     filesMatching("fabric.mod.json") {
         expand "version": project.version
     }
+}
+
+tasks.named("test", Test) {
+    useJUnitPlatform()
 }
 
 publishing {

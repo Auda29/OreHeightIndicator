@@ -76,6 +76,7 @@ Die Repo-Workflows sind dokumentiert in:
 
 - `docs/workflow/dev-workflow.md`
 - `docs/workflow/git-github-workflow.md`
+- `docs/workflow/manual-test-plan.md`
 - `.taskmaster/docs/README.md`
 
 Kurzfassung:
@@ -88,6 +89,7 @@ Kurzfassung:
 
 - `task-master parse-prd` benoetigt konfigurierte API-Keys (z. B. `ANTHROPIC_API_KEY` / `PERPLEXITY_API_KEY`) in deiner Umgebung.
 - Dynamic Worldgen Extraction ist als naechster Ausbauschritt vorgesehen, aber im aktuellen MVP noch nicht aktiv.
+- Architekturentscheidung dokumentiert in `docs/decisions/adr-0001-hybrid-provider-architecture.md`.
 
 ## Roadmap (naechste Schritte)
 
