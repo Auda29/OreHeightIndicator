@@ -73,6 +73,16 @@ public final class ModMenuIntegration implements ModMenuApi {
                     .build()
             );
 
+            hud.addEntry(
+                entries.startFloatField(Text.literal("Minimum Percent"), config.minimumPercent != null ? config.minimumPercent : 0.5f)
+                    .setDefaultValue(0.5f)
+                    .setMin(0.0f)
+                    .setMax(50.0f)
+                    .setTooltip(Text.literal("Ores below this percentage are hidden. Set to 0 to show all."))
+                    .setSaveConsumer(value -> config.minimumPercent = value)
+                    .build()
+            );
+
             data.addEntry(
                 entries.startIntField(Text.literal("Update Interval (ticks)"), config.updateIntervalTicks)
                     .setDefaultValue(6)

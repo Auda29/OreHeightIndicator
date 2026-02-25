@@ -25,6 +25,7 @@ public final class ModConfig {
     public Boolean showOreIcons = true;
     public Boolean animateReorder = true;
     public Float uiScale = 1.0f;
+    public Float minimumPercent = 0.5f;
 
     public static ModConfig load() {
         if (!Files.exists(CONFIG_PATH)) {
@@ -83,5 +84,9 @@ public final class ModConfig {
             uiScale = 1.0f;
         }
         uiScale = Math.max(0.5f, Math.min(3.0f, uiScale));
+        if (minimumPercent == null) {
+            minimumPercent = 0.5f;
+        }
+        minimumPercent = Math.max(0.0f, Math.min(50.0f, minimumPercent));
     }
 }

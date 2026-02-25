@@ -118,7 +118,8 @@ public final class OreHudRenderer {
             if (count >= config.maxEntries) {
                 break;
             }
-            if (chance.percent() <= 0.0f) {
+            float threshold = config.minimumPercent != null ? config.minimumPercent : 0.5f;
+            if (chance.percent() < threshold) {
                 continue;
             }
 
