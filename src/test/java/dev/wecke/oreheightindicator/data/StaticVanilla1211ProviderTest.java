@@ -52,8 +52,8 @@ class StaticVanilla1211ProviderTest {
         float redstone = out[4];
         float diamond = out[6];
 
-        assertTrue(redstone > coal);
-        assertTrue(diamond > coal);
+        assertTrue(redstone > coal, "redstone should exceed coal at Y=-48");
+        assertTrue(diamond > coal, "diamond should exceed coal at Y=-48");
     }
 
     @Test
@@ -66,8 +66,8 @@ class StaticVanilla1211ProviderTest {
         float iron = out[2];
         float diamond = out[6];
 
-        assertTrue(copper > diamond);
-        assertTrue(iron > diamond);
+        assertTrue(copper > diamond, "copper should exceed diamond at Y=48");
+        assertTrue(iron > diamond, "iron should exceed diamond at Y=48");
     }
 
     @Test
@@ -81,9 +81,9 @@ class StaticVanilla1211ProviderTest {
         float diamond = out[6];
         float emerald = out[7];
 
-        assertTrue(coal > redstone);
-        assertTrue(coal > diamond);
-        assertTrue(emerald > redstone);
+        assertTrue(coal > redstone, "coal should exceed redstone at Y=200");
+        assertTrue(coal > diamond, "coal should exceed diamond at Y=200");
+        assertTrue(emerald > redstone, "emerald should exceed redstone at Y=200");
     }
 
     @Test
@@ -91,10 +91,54 @@ class StaticVanilla1211ProviderTest {
         StaticVanilla1211Provider provider = new StaticVanilla1211Provider();
         float[] out = new float[provider.oreCount()];
 
-        provider.fillScores(120, out);
-        assertEquals(0.0f, out[3], 1.0e-6f);
+        provider.fillScores(250, out);
+        assertEquals(0.0f, out[3], 1.0e-6f, "gold should be zero at Y=250");
 
         provider.fillScores(-56, out);
-        assertTrue(out[3] > 0.0f);
+        assertTrue(out[3] > 0.0f, "gold should be positive at Y=-56");
+    }
+
+    @Test
+    void peakYLevelsMatchWikiData() {
+        StaticVanilla1211Provider provider = new StaticVanilla1211Provider();
+        float[] out = new float[provider.oreCount()];
+
+        // Copper peaks at Y=44 and is the global peak (1.0)
+        provider.fillScores(44, out);
+        float copperPeak = out[1];
+        assertEquals(1.0f, copperPeak, 0.01f, "copper should be 1.0 at Y=44 (global peak)");
+
+        // Coal peaks around Y=45 (~0.868 of global peak)
+        provider.fillScores(45, out);
+        float coalPeak = out[0];
+        assertEquals(0.868f, coalPeak, 0.02f, "coal should peak near Y=45");
+
+        // Diamond peaks around Y=-59 (~0.306 of global peak)
+        provider.fillScores(-59, out);
+        float diamondPeak = out[6];
+        assertEquals(0.306f, diamondPeak, 0.02f, "diamond should peak near Y=-59");
+
+        // Iron peaks around Y=14 (~0.763 of global peak)
+        provider.fillScores(14, out);
+        float ironPeak = out[2];
+        assertEquals(0.763f, ironPeak, 0.02f, "iron should peak near Y=14");
+    }
+
+    @Test
+    void outsideOreRangeReturnsZero() {
+        StaticVanilla1211Provider provider = new StaticVanilla1211Provider();
+        float[] out = new float[provider.oreCount()];
+
+        // Diamond doesn't spawn above Y=16
+        provider.fillScores(50, out);
+        assertEquals(0.0f, out[6], 1.0e-6f, "diamond should be zero at Y=50");
+
+        // Coal doesn't spawn below Y=-38
+        provider.fillScores(-50, out);
+        assertEquals(0.0f, out[0], 1.0e-6f, "coal should be zero at Y=-50");
+
+        // Copper doesn't spawn below Y=-20
+        provider.fillScores(-30, out);
+        assertEquals(0.0f, out[1], 1.0e-6f, "copper should be zero at Y=-30");
     }
 }
