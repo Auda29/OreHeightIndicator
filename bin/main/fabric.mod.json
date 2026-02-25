@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "oreheightindicator",
+  "version": "${version}",
+  "name": "Ore Height Indicator",
+  "description": "Shows likely ore probabilities for the current Y-level.",
+  "authors": [
+    "wecke"
+  ],
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "dev.wecke.oreheightindicator.OreHeightIndicatorClient"
+    ],
+    "modmenu": [
+      "dev.wecke.oreheightindicator.config.ModMenuIntegration"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "minecraft": ">=1.21.1 <1.22",
+    "java": ">=21",
+    "fabric-api": "*"
+  },
+  "suggests": {
+    "modmenu": "*"
+  }
+}
