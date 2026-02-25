@@ -1,22 +1,26 @@
 # Ore Height Indicator
 
-Client-side Fabric Mod fuer Minecraft `1.21.1`, die im HUD die aktuelle Hoehe (Y) und eine sortierte Liste mit Ore-Wahrscheinlichkeiten anzeigt.
+Client-side Fabric mod for Minecraft `1.21.1` that displays the current height (Y) and a sorted list of ore probabilities on the HUD.
 
-## Features (aktueller Stand)
+## Features (Current State)
 
-- HUD mit Toggle-Keybind (`H`)
-- Mod Menu + Cloth Config Einstellungsbildschirm
-- Anzeige der aktuellen Spielerhoehe (`Y`)
-- Sortierte Ore-Liste mit Prozentwerten (relativer Score je Hoehe)
-- Performance-schonendes Update-Verhalten:
-  - keine Berechnung pro Frame
-  - Tick-Intervall steuerbar (`updateIntervalTicks`)
-  - Recompute nur bei geaenderter Hoehe
-- Datenquellen-Architektur vorbereitet:
-  - `StaticVanilla1211Provider` aktiv
-  - `DynamicWorldgenProviderStub` vorhanden (standardmaessig aus)
+- HUD with toggle keybind (`H`)
+- Mod Menu + Cloth Config settings screen
+- Display of the current player height (`Y`)
+- Sorted ore list with percentage values (relative score per height)
+- Ore item icons next to each HUD row (toggleable)
+- Smooth animated row reordering when rankings change
+- Configurable UI scale for the entire HUD
+- Configurable minimum percent threshold to hide low-probability ores
+- Performance-conscious update behavior:
+  - No computation per frame
+  - Tick interval configurable (`updateIntervalTicks`)
+  - Recompute only when height changes
+- Data source architecture prepared:
+  - `StaticVanilla1211Provider` active (wiki-based globally-normalized data)
+  - `DynamicWorldgenProviderStub` available (disabled by default)
 
-## Kompatibilitaet / Stack
+## Compatibility / Stack
 
 - Minecraft: `1.21.1`
 - Mod Loader: Fabric Loader (`0.18.4` in `gradle.properties`)
@@ -24,79 +28,86 @@ Client-side Fabric Mod fuer Minecraft `1.21.1`, die im HUD die aktuelle Hoehe (Y
 - Java: `21`
 - Build: Gradle + Fabric Loom
 
-## Projektstruktur (wichtig)
+## Project Structure (Key Files)
 
-- Mod-Einstieg: `src/main/java/dev/wecke/oreheightindicator/OreHeightIndicatorClient.java`
+- Mod entry point: `src/main/java/dev/wecke/oreheightindicator/OreHeightIndicatorClient.java`
 - Config: `src/main/java/dev/wecke/oreheightindicator/config/ModConfig.java`
-- Probability-Logik: `src/main/java/dev/wecke/oreheightindicator/data/OreProbabilityService.java`
-- HUD-Rendering: `src/main/java/dev/wecke/oreheightindicator/hud/OreHudRenderer.java`
-- Mod-Metadaten: `src/main/resources/fabric.mod.json`
+- Probability logic: `src/main/java/dev/wecke/oreheightindicator/data/OreProbabilityService.java`
+- HUD rendering: `src/main/java/dev/wecke/oreheightindicator/hud/OreHudRenderer.java`
+- Mod metadata: `src/main/resources/fabric.mod.json`
 
 ## Getting Started
 
-### Build lokal
+### Local Build
 
 ```bash
 ./gradlew build
 ```
 
-Das Build-Artifact liegt danach in `build/libs/`.
+The build artifact will be located in `build/libs/`.
 
-### In Minecraft verwenden
+### Using in Minecraft
 
-1. Fabric fuer `1.21.1` installieren.
-2. Gebaute Mod-JAR in den `mods`-Ordner legen.
-3. Spiel starten und mit `H` das HUD ein-/ausblenden.
+1. Install Fabric for `1.21.1`.
+2. Place the built mod JAR in the `mods` folder.
+3. Start the game and press `H` to toggle the HUD.
 
-## Konfiguration
+## Configuration
 
-Datei: `.minecraft/config/oreheightindicator.json` (wird beim ersten Start erzeugt)
+File: `.minecraft/config/oreheightindicator.json` (created on first launch)
 
-Konfiguration ist auf zwei Wegen moeglich:
+Configuration is available in two ways:
 
-- Ingame ueber **Mod Menu** -> Ore Height Indicator -> Config
-- Direkt per Datei: `.minecraft/config/oreheightindicator.json`
+- In-game via **Mod Menu** -> Ore Height Indicator -> Config
+- Directly via file: `.minecraft/config/oreheightindicator.json`
 
-Relevante Felder:
+### HUD Settings
 
-- `hudEnabled`: HUD standardmaessig aktiv/inaktiv
-- `hudX`, `hudY`: Position des HUD
-- `updateIntervalTicks`: Rechenintervall (Performance-Hebel)
-- `maxEntries`: maximale Anzahl angezeigter Ores
-- `useDynamicProvider`: vorbereitet, aktuell nur Stub
+- `hudEnabled`: Whether the HUD is active by default
+- `hudX`, `hudY`: HUD position offset
+- `showOreIcons`: Show or hide ore item icons for each row
+- `animateReorder`: Smooth row movement when ore ranking changes
+- `uiScale`: Scales the entire HUD size (0.5 - 3.0, default 1.0)
+- `minimumPercent`: Hide ores below this percentage threshold (0.0 - 50.0, default 0.5)
 
-## Performance-Hinweise
+### Data & Performance Settings
 
-- Die Mod ist bewusst auf minimalen Impact ausgelegt.
-- Keine schweren Worldgen-Scans im Render-Pfad.
-- HUD-Text wird nur bei geaenderten Daten neu aufgebaut.
-- Falls noetig kann die Mod schnell entschärft werden ueber:
-  - hoeheres `updateIntervalTicks`
+- `updateIntervalTicks`: Recalculation interval in ticks (performance lever)
+- `maxEntries`: Maximum number of ore rows shown
+- `useDynamicProvider`: Prepared for future dynamic worldgen extraction (currently stub only)
+
+## Performance Notes
+
+- The mod is intentionally designed for minimal impact.
+- No heavy worldgen scans in the render path.
+- HUD text is only rebuilt when data changes.
+- If needed, the mod can be quickly throttled via:
+  - Higher `updateIntervalTicks`
   - `hudEnabled: false`
 
 ## Development Workflow
 
-Die Repo-Workflows sind dokumentiert in:
+Repository workflows are documented in:
 
 - `docs/workflow/dev-workflow.md`
 - `docs/workflow/git-github-workflow.md`
 - `docs/workflow/manual-test-plan.md`
 - `.taskmaster/docs/README.md`
 
-Kurzfassung:
+Quick summary:
 
-1. Taskmaster Loop nutzen: `task-master list --with-subtasks` -> `task-master next` -> `task-master show <id>`
-2. In kleinen Schritten implementieren, dann Status/Notizen updaten
-3. Commits nach Conventional Commits, PR gegen `main`
+1. Use Taskmaster loop: `task-master list --with-subtasks` -> `task-master next` -> `task-master show <id>`
+2. Implement in small steps, then update status/notes
+3. Commits follow Conventional Commits, PR against `main`
 
-## Wichtige Hinweise
+## Important Notes
 
-- `task-master parse-prd` benoetigt konfigurierte API-Keys (z. B. `ANTHROPIC_API_KEY` / `PERPLEXITY_API_KEY`) in deiner Umgebung.
-- Dynamic Worldgen Extraction ist als naechster Ausbauschritt vorgesehen, aber im aktuellen MVP noch nicht aktiv.
-- Architekturentscheidung dokumentiert in `docs/decisions/adr-0001-hybrid-provider-architecture.md`.
+- `task-master parse-prd` requires configured API keys (e.g., `ANTHROPIC_API_KEY` / `PERPLEXITY_API_KEY`) in your environment.
+- Dynamic worldgen extraction is planned as the next development step but is not active in the current MVP.
+- Architecture decision documented in `docs/decisions/adr-0001-hybrid-provider-architecture.md`.
 
-## Roadmap (naechste Schritte)
+## Roadmap (Next Steps)
 
-- Dynamic Provider mit echter Worldgen-Auswertung anbinden
-- Verfeinerung der Verteilungsmodelle/Genauigkeit
-- Optionales erweitertes UI (z. B. Range-Ansicht)
+- Connect dynamic provider with real worldgen extraction
+- Refine distribution models and accuracy
+- Optional extended UI (e.g., range view)

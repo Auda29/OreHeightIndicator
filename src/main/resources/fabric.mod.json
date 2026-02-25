@@ -5,7 +5,7 @@
   "name": "Ore Height Indicator",
   "description": "Shows likely ore probabilities for the current Y-level.",
   "authors": [
-    "wecke"
+    "Auda29"
   ],
   "environment": "client",
   "entrypoints": {
