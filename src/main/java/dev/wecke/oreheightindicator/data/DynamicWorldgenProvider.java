@@ -95,7 +95,8 @@ public final class DynamicWorldgenProvider implements OreDataProvider {
                 foundAny = true;
                 HeightProfile heightProfile = readHeightProfile(featureJson);
                 double countWeight = readCountWeight(featureJson);
-                accumulate(scores[oreIndex], heightProfile, countWeight);
+                double sizeWeight = readConfiguredFeatureSizeWeight(resourceManager, featureJson);
+                accumulate(scores[oreIndex], heightProfile, countWeight * sizeWeight);
             }
 
             if (foundAny) {
@@ -106,6 +107,10 @@ public final class DynamicWorldgenProvider implements OreDataProvider {
         if (oresWithData < 4) {
             throw new IllegalStateException("Could not read enough vanilla placed features for dynamic provider.");
         }
+
+        // Anchor dynamic curves against a known vanilla baseline so unsupported/biome-local
+        // features cannot dominate globally with implausible values.
+        applyStaticVanillaAnchor(scores);
         return scores;
     }
 
@@ -145,6 +150,19 @@ public final class DynamicWorldgenProvider implements OreDataProvider {
                 continue;
             }
             targetScores[yIndex] += (float) (shape * countWeight);
+        }
+    }
+
+    private static void applyStaticVanillaAnchor(float[][] scores) {
+        StaticVanilla1211Provider staticProvider = new StaticVanilla1211Provider();
+        float[] baseline = new float[staticProvider.oreCount()];
+        for (int y = MIN_Y; y <= MAX_Y; y++) {
+            staticProvider.fillScores(y, baseline);
+            int yIndex = y - MIN_Y;
+            for (int oreIndex = 0; oreIndex < ORE_NAMES.length; oreIndex++) {
+                float anchor = Math.max(0.0f, baseline[oreIndex]);
+                scores[oreIndex][yIndex] *= anchor;
+            }
         }
     }
 
@@ -238,11 +256,11 @@ public final class DynamicWorldgenProvider implements OreDataProvider {
             JsonObject placement = element.getAsJsonObject();
             String type = readString(placement, "type");
             if ("minecraft:count".equals(type)) {
-                return Math.max(0.0, readNumberOrFallback(placement.get("count"), 1.0));
+                return Math.max(0.0, readIntProviderExpected(placement.get("count"), 1.0));
             }
             if ("minecraft:count_extra".equals(type)) {
-                double count = Math.max(0.0, readNumberOrFallback(placement.get("count"), 1.0));
-                double extraCount = Math.max(0.0, readNumberOrFallback(placement.get("extra_count"), 0.0));
+                double count = Math.max(0.0, readIntProviderExpected(placement.get("count"), 1.0));
+                double extraCount = Math.max(0.0, readIntProviderExpected(placement.get("extra_count"), 0.0));
                 double extraChance = Math.max(0.0, Math.min(1.0, readNumberOrFallback(placement.get("extra_chance"), 0.0)));
                 return count + (extraCount * extraChance);
             }
@@ -255,6 +273,19 @@ public final class DynamicWorldgenProvider implements OreDataProvider {
     }
 
     private static int readYOffset(JsonElement element) {
+        if (element != null && element.isJsonPrimitive()) {
+            try {
+                String literal = element.getAsString();
+                if ("minecraft:bottom".equals(literal)) {
+                    return MIN_Y;
+                }
+                if ("minecraft:top".equals(literal)) {
+                    return MAX_Y;
+                }
+            } catch (RuntimeException ignored) {
+            }
+        }
+
         JsonObject object = asObject(element);
         if (object == null) {
             return MIN_Y;
@@ -264,6 +295,9 @@ public final class DynamicWorldgenProvider implements OreDataProvider {
         }
         if (object.has("above_bottom")) {
             return MIN_Y + (int) Math.round(readNumberOrFallback(object.get("above_bottom"), 0.0));
+        }
+        if (object.has("below_top")) {
+            return MAX_Y - (int) Math.round(readNumberOrFallback(object.get("below_top"), 0.0));
         }
         return MIN_Y;
     }
@@ -311,6 +345,91 @@ public final class DynamicWorldgenProvider implements OreDataProvider {
             return readNumberOrFallback(object.get("min_inclusive"), fallback);
         }
         return fallback;
+    }
+
+    private static double readIntProviderExpected(JsonElement element, double fallback) {
+        if (element == null) {
+            return fallback;
+        }
+        if (element.isJsonPrimitive()) {
+            return readNumberOrFallback(element, fallback);
+        }
+
+        JsonObject object = asObject(element);
+        if (object == null) {
+            return fallback;
+        }
+
+        String type = readString(object, "type");
+        if ("minecraft:constant".equals(type)) {
+            return readNumberOrFallback(object.get("value"), fallback);
+        }
+        if ("minecraft:uniform".equals(type)) {
+            double min = readNumberOrFallback(object.get("min_inclusive"), fallback);
+            double max = readNumberOrFallback(object.get("max_inclusive"), fallback);
+            return (min + max) / 2.0;
+        }
+        if ("minecraft:biased_to_bottom".equals(type)) {
+            double min = readNumberOrFallback(object.get("min_inclusive"), fallback);
+            double max = readNumberOrFallback(object.get("max_inclusive"), fallback);
+            return min + ((max - min) / 3.0);
+        }
+        return readNumberOrFallback(element, fallback);
+    }
+
+    private static double readConfiguredFeatureSizeWeight(ResourceManager resourceManager, JsonObject placedFeatureJson) {
+        String configuredFeatureRef = readConfiguredFeatureRef(placedFeatureJson);
+        if (configuredFeatureRef.isEmpty()) {
+            return 1.0;
+        }
+
+        Identifier configuredId = Identifier.tryParse(configuredFeatureRef);
+        if (configuredId == null) {
+            return 1.0;
+        }
+
+        Identifier resourceId = Identifier.of(
+            configuredId.getNamespace(),
+            "worldgen/configured_feature/" + configuredId.getPath() + ".json"
+        );
+        Optional<Resource> resource = resourceManager.getResource(resourceId);
+        if (resource.isEmpty()) {
+            return 1.0;
+        }
+
+        try (Reader reader = new InputStreamReader(resource.get().getInputStream(), StandardCharsets.UTF_8)) {
+            JsonElement parsed = JsonParser.parseReader(reader);
+            JsonObject configured = parsed != null && parsed.isJsonObject() ? parsed.getAsJsonObject() : null;
+            if (configured == null) {
+                return 1.0;
+            }
+            JsonObject config = asObject(configured.get("config"));
+            if (config == null) {
+                return 1.0;
+            }
+
+            double size = Math.max(1.0, readNumberOrFallback(config.get("size"), 1.0));
+            double discard = Math.max(0.0, Math.min(1.0, readNumberOrFallback(config.get("discard_chance_on_air_exposure"), 0.0)));
+            return size * (1.0 - (discard * 0.5));
+        } catch (IOException | RuntimeException ignored) {
+            return 1.0;
+        }
+    }
+
+    private static String readConfiguredFeatureRef(JsonObject placedFeatureJson) {
+        if (placedFeatureJson == null || !placedFeatureJson.has("feature")) {
+            return "";
+        }
+
+        JsonElement feature = placedFeatureJson.get("feature");
+        if (feature != null && feature.isJsonPrimitive()) {
+            try {
+                return feature.getAsString();
+            } catch (RuntimeException ignored) {
+                return "";
+            }
+        }
+        return "";
     }
 
     private static void validateScores(float[][] scoresByOre) {
