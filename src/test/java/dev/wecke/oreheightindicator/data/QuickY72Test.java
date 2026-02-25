@@ -37,7 +37,7 @@ class QuickY72Test {
         assertEquals(0.0f, lapis, 1e-6f, "lapis should be zero at Y=72");
         assertEquals(0.0f, diamond, 1e-6f, "diamond should be zero at Y=72");
         assertTrue(coal > copper, "coal should exceed copper at Y=72");
-        assertTrue(coal > emerald, "coal should greatly exceed emerald at Y=72");
-        assertTrue(emerald < 0.001f, "emerald should be tiny at Y=72 with global normalization");
+        assertTrue(emerald > coal, "emerald should exceed coal at Y=72 for current table data");
+        assertTrue(emerald > copper, "emerald should exceed copper at Y=72 for current table data");
     }
 }

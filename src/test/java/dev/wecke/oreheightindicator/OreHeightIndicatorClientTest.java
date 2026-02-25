@@ -1,6 +1,5 @@
 package dev.wecke.oreheightindicator;
 
-import dev.wecke.oreheightindicator.config.ModConfig;
 import dev.wecke.oreheightindicator.data.OreDataProvider;
 import dev.wecke.oreheightindicator.data.StaticVanilla1211Provider;
 import org.junit.jupiter.api.Test;
@@ -11,10 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 class OreHeightIndicatorClientTest {
     @Test
     void createProviderReturnsStaticWhenDynamicDisabled() {
-        ModConfig config = new ModConfig();
-        config.useDynamicProvider = false;
-
-        OreDataProvider provider = OreHeightIndicatorClient.createProvider(config, () -> {
+        OreDataProvider provider = OreHeightIndicatorClient.createProvider(false, () -> {
             throw new IllegalStateException("must not be called");
         });
 
@@ -23,10 +19,7 @@ class OreHeightIndicatorClientTest {
 
     @Test
     void createProviderFallsBackToStaticWhenDynamicInitializationFails() {
-        ModConfig config = new ModConfig();
-        config.useDynamicProvider = true;
-
-        OreDataProvider provider = OreHeightIndicatorClient.createProvider(config, () -> {
+        OreDataProvider provider = OreHeightIndicatorClient.createProvider(true, () -> {
             throw new IllegalStateException("simulated init failure");
         });
 
@@ -35,11 +28,9 @@ class OreHeightIndicatorClientTest {
 
     @Test
     void createProviderUsesDynamicWhenInitializationSucceeds() {
-        ModConfig config = new ModConfig();
-        config.useDynamicProvider = true;
         OreDataProvider fakeDynamic = new FakeProvider();
 
-        OreDataProvider provider = OreHeightIndicatorClient.createProvider(config, () -> fakeDynamic);
+        OreDataProvider provider = OreHeightIndicatorClient.createProvider(true, () -> fakeDynamic);
 
         assertSame(fakeDynamic, provider);
     }

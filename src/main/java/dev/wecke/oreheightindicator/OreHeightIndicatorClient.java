@@ -28,7 +28,7 @@ public final class OreHeightIndicatorClient implements ClientModInitializer {
     public void onInitializeClient() {
         config = ModConfig.getCurrent();
 
-        OreDataProvider provider = createProvider(config, DynamicWorldgenProvider::new);
+        OreDataProvider provider = createProvider(config.useDynamicProvider, DynamicWorldgenProvider::new);
 
         OreProbabilityService probabilityService = new OreProbabilityService(provider);
         hudRenderer = new OreHudRenderer(config, probabilityService);
@@ -43,7 +43,11 @@ public final class OreHeightIndicatorClient implements ClientModInitializer {
     }
 
     static OreDataProvider createProvider(ModConfig config, Supplier<OreDataProvider> dynamicFactory) {
-        if (!config.useDynamicProvider) {
+        return createProvider(config.useDynamicProvider, dynamicFactory);
+    }
+
+    static OreDataProvider createProvider(boolean useDynamicProvider, Supplier<OreDataProvider> dynamicFactory) {
+        if (!useDynamicProvider) {
             return new StaticVanilla1211Provider();
         }
         try {
