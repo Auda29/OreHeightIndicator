@@ -18,7 +18,7 @@ Client-side Fabric mod for Minecraft `1.21.1` that displays the current height (
   - Recompute only when height changes
 - Data source architecture prepared:
   - `StaticVanilla1211Provider` active (wiki-based globally-normalized data)
-  - `DynamicWorldgenProviderStub` available (disabled by default)
+  - `DynamicWorldgenProvider` available (experimental MVP, disabled by default)
 
 ## Compatibility / Stack
 
@@ -74,7 +74,7 @@ Configuration is available in two ways:
 
 - `updateIntervalTicks`: Recalculation interval in ticks (performance lever)
 - `maxEntries`: Maximum number of ore rows shown
-- `useDynamicProvider`: Prepared for future dynamic worldgen extraction (currently stub only)
+- `useDynamicProvider`: Uses experimental runtime worldgen extraction for vanilla ore placed-features; automatically falls back to static data if initialization fails
 
 ## Performance Notes
 
@@ -103,11 +103,11 @@ Quick summary:
 ## Important Notes
 
 - `task-master parse-prd` requires configured API keys (e.g., `ANTHROPIC_API_KEY` / `PERPLEXITY_API_KEY`) in your environment.
-- Dynamic worldgen extraction is planned as the next development step but is not active in the current MVP.
+- Dynamic worldgen extraction is active as an experimental MVP for vanilla ore placed-features. Non-standard/unsupported worldgen cases fall back to static data.
 - Architecture decision documented in `docs/decisions/adr-0001-hybrid-provider-architecture.md`.
 
 ## Roadmap (Next Steps)
 
-- Connect dynamic provider with real worldgen extraction
+- Expand dynamic extraction coverage beyond the current vanilla MVP
 - Refine distribution models and accuracy
 - Optional extended UI (e.g., range view)

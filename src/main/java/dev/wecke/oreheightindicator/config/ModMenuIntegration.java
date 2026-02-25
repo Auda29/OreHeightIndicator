@@ -107,7 +107,8 @@ public final class ModMenuIntegration implements ModMenuApi {
                     .setTooltip(
                         Text.literal("Reads ore data from worldgen dynamically."),
                         Text.literal("Requires restart to fully apply."),
-                        Text.literal("Experimental: current implementation is a stub.")
+                        Text.literal("Experimental MVP: vanilla ore features only."),
+                        Text.literal("Falls back to static provider if initialization fails.")
                     )
                     .setSaveConsumer(value -> config.useDynamicProvider = value)
                     .build()

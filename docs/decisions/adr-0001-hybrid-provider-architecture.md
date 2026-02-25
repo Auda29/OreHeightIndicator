@@ -21,7 +21,8 @@ Use a hybrid provider architecture:
 
 1. `StaticVanilla1211Provider` is the default provider for MVP.
 2. `OreDataProvider` defines the contract so provider logic is decoupled from UI.
-3. `DynamicWorldgenProviderStub` is included as a non-functional extension point and is disabled by default via config.
+3. `DynamicWorldgenProvider` is included as an experimental MVP that derives scores from vanilla placed-feature worldgen data and remains disabled by default via config.
+4. If dynamic provider initialization fails, the client automatically falls back to `StaticVanilla1211Provider`.
 
 Use strict performance guardrails in runtime flow:
 
@@ -41,10 +42,10 @@ Positive:
 Negative:
 
 - Static provider requires maintenance for version changes.
-- Dynamic provider path is currently a stub and not useful yet if enabled.
+- Dynamic provider currently targets vanilla placed-feature coverage and may not model every custom datapack/modded worldgen case.
 
 ## Follow-up
 
-- Implement real `DynamicWorldgenProvider` extraction logic.
+- Extend dynamic extraction coverage for additional worldgen cases beyond vanilla MVP.
 - Add automatic fallback/warning when dynamic mode is enabled but unsupported.
 - Re-validate static curves whenever target Minecraft version changes.

@@ -1,7 +1,7 @@
 package dev.wecke.oreheightindicator;
 
 import dev.wecke.oreheightindicator.config.ModConfig;
-import dev.wecke.oreheightindicator.data.DynamicWorldgenProviderStub;
+import dev.wecke.oreheightindicator.data.DynamicWorldgenProvider;
 import dev.wecke.oreheightindicator.data.OreDataProvider;
 import dev.wecke.oreheightindicator.data.OreProbabilityService;
 import dev.wecke.oreheightindicator.data.StaticVanilla1211Provider;
@@ -16,6 +16,7 @@ import net.minecraft.client.util.InputUtil;
 import org.lwjgl.glfw.GLFW;
 
 import java.lang.reflect.Constructor;
+import java.util.function.Supplier;
 
 public final class OreHeightIndicatorClient implements ClientModInitializer {
     private ModConfig config;
@@ -27,9 +28,7 @@ public final class OreHeightIndicatorClient implements ClientModInitializer {
     public void onInitializeClient() {
         config = ModConfig.getCurrent();
 
-        OreDataProvider provider = config.useDynamicProvider
-            ? new DynamicWorldgenProviderStub()
-            : new StaticVanilla1211Provider();
+        OreDataProvider provider = createProvider(config, DynamicWorldgenProvider::new);
 
         OreProbabilityService probabilityService = new OreProbabilityService(provider);
         hudRenderer = new OreHudRenderer(config, probabilityService);
@@ -41,6 +40,21 @@ public final class OreHeightIndicatorClient implements ClientModInitializer {
 
         ClientTickEvents.END_CLIENT_TICK.register(this::onClientTick);
         HudRenderCallback.EVENT.register((drawContext, tickCounter) -> hudRenderer.render(drawContext));
+    }
+
+    static OreDataProvider createProvider(ModConfig config, Supplier<OreDataProvider> dynamicFactory) {
+        if (!config.useDynamicProvider) {
+            return new StaticVanilla1211Provider();
+        }
+        try {
+            OreDataProvider dynamicProvider = dynamicFactory.get();
+            System.out.println("[OreHeightIndicator] Dynamic provider enabled.");
+            return dynamicProvider;
+        } catch (RuntimeException ex) {
+            System.err.println("[OreHeightIndicator] Dynamic provider initialization failed. Falling back to static provider.");
+            System.err.println("[OreHeightIndicator] Cause: " + ex.getMessage());
+            return new StaticVanilla1211Provider();
+        }
     }
 
     private void onClientTick(MinecraftClient client) {
