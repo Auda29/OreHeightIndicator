@@ -32,8 +32,8 @@ class OreProbabilityServiceTest {
     }
 
     @Test
-    void sortedChancesNormalizesAndSortsDescending() {
-        FakeProvider provider = new FakeProvider(new float[] {2.0f, 1.0f, 1.0f}, 0, 10);
+    void sortedChancesConvertsSuitabilityToPercentWithoutCrossOreNormalization() {
+        FakeProvider provider = new FakeProvider(new float[] {0.2f, 0.1f, 0.1f}, 0, 10);
         OreProbabilityService service = new OreProbabilityService(provider);
 
         service.updateIfNeeded(3);
@@ -41,17 +41,17 @@ class OreProbabilityServiceTest {
 
         assertEquals(3, chances.size());
         assertEquals("A", chances.get(0).oreName());
-        assertEquals(50.0f, chances.get(0).percent(), 1.0e-5f);
-        assertEquals(25.0f, chances.get(1).percent(), 1.0e-5f);
-        assertEquals(25.0f, chances.get(2).percent(), 1.0e-5f);
+        assertEquals(20.0f, chances.get(0).relevance(), 1.0e-5f);
+        assertEquals(10.0f, chances.get(1).relevance(), 1.0e-5f);
+        assertEquals(10.0f, chances.get(2).relevance(), 1.0e-5f);
 
         float sum = 0.0f;
         for (OreProbabilityService.OreChance chance : chances) {
-            sum += chance.percent();
+            sum += chance.relevance();
         }
-        assertEquals(100.0f, sum, 1.0e-3f);
-        assertTrue(chances.get(0).percent() >= chances.get(1).percent());
-        assertTrue(chances.get(1).percent() >= chances.get(2).percent());
+        assertEquals(40.0f, sum, 1.0e-3f);
+        assertTrue(chances.get(0).relevance() >= chances.get(1).relevance());
+        assertTrue(chances.get(1).relevance() >= chances.get(2).relevance());
     }
 
     @Test
@@ -61,7 +61,7 @@ class OreProbabilityServiceTest {
 
         service.updateIfNeeded(5);
         for (OreProbabilityService.OreChance chance : service.sortedChances()) {
-            assertEquals(0.0f, chance.percent(), 1.0e-6f);
+            assertEquals(0.0f, chance.relevance(), 1.0e-6f);
         }
     }
 

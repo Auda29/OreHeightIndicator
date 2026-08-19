@@ -1,4 +1,5 @@
 {
   "key.oreheightindicator.toggle_hud": "Toggle Ore Height HUD",
-  "category.oreheightindicator": "Ore Height Indicator"
+  "category.oreheightindicator": "Ore Height Indicator",
+  "key.category.oreheightindicator.main": "Ore Height Indicator"
 }

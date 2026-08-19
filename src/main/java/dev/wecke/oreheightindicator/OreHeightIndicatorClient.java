@@ -1,10 +1,9 @@
 package dev.wecke.oreheightindicator;
 
 import dev.wecke.oreheightindicator.config.ModConfig;
-import dev.wecke.oreheightindicator.data.DynamicWorldgenProvider;
 import dev.wecke.oreheightindicator.data.OreDataProvider;
 import dev.wecke.oreheightindicator.data.OreProbabilityService;
-import dev.wecke.oreheightindicator.data.StaticVanilla1211Provider;
+import dev.wecke.oreheightindicator.data.AutomaticWorldgenProvider;
 import dev.wecke.oreheightindicator.hud.OreHudRenderer;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -13,12 +12,14 @@ import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
 
-import java.lang.reflect.Constructor;
-import java.util.function.Supplier;
-
 public final class OreHeightIndicatorClient implements ClientModInitializer {
+    private static final KeyBinding.Category KEY_CATEGORY = KeyBinding.Category.create(
+        Identifier.of("oreheightindicator", "main")
+    );
+
     private ModConfig config;
     private OreHudRenderer hudRenderer;
     private KeyBinding toggleHudKey;
@@ -28,7 +29,7 @@ public final class OreHeightIndicatorClient implements ClientModInitializer {
     public void onInitializeClient() {
         config = ModConfig.getCurrent();
 
-        OreDataProvider provider = createProvider(config.useDynamicProvider, DynamicWorldgenProvider::new);
+        OreDataProvider provider = new AutomaticWorldgenProvider();
 
         OreProbabilityService probabilityService = new OreProbabilityService(provider);
         hudRenderer = new OreHudRenderer(config, probabilityService);
@@ -40,25 +41,6 @@ public final class OreHeightIndicatorClient implements ClientModInitializer {
 
         ClientTickEvents.END_CLIENT_TICK.register(this::onClientTick);
         HudRenderCallback.EVENT.register((drawContext, tickCounter) -> hudRenderer.render(drawContext));
-    }
-
-    static OreDataProvider createProvider(ModConfig config, Supplier<OreDataProvider> dynamicFactory) {
-        return createProvider(config.useDynamicProvider, dynamicFactory);
-    }
-
-    static OreDataProvider createProvider(boolean useDynamicProvider, Supplier<OreDataProvider> dynamicFactory) {
-        if (!useDynamicProvider) {
-            return new StaticVanilla1211Provider();
-        }
-        try {
-            OreDataProvider dynamicProvider = dynamicFactory.get();
-            System.out.println("[OreHeightIndicator] Dynamic provider enabled.");
-            return dynamicProvider;
-        } catch (RuntimeException ex) {
-            System.err.println("[OreHeightIndicator] Dynamic provider initialization failed. Falling back to static provider.");
-            System.err.println("[OreHeightIndicator] Cause: " + ex.getMessage());
-            return new StaticVanilla1211Provider();
-        }
     }
 
     private void onClientTick(MinecraftClient client) {
@@ -78,51 +60,15 @@ public final class OreHeightIndicatorClient implements ClientModInitializer {
         updateTickCounter = 0;
 
         int currentY = (int) Math.floor(client.player.getY());
-        hudRenderer.updateForY(currentY);
+        hudRenderer.update(client, currentY);
     }
 
     private static KeyBinding createToggleHudKeyBinding() {
-        final String translationKey = "key.oreheightindicator.toggle_hud";
-        final String category = "category.oreheightindicator";
-        final int keyCode = GLFW.GLFW_KEY_H;
-        final InputUtil.Key key = InputUtil.Type.KEYSYM.createFromCode(keyCode);
-
-        // Try known constructor shapes first.
-        for (Constructor<?> constructor : KeyBinding.class.getConstructors()) {
-            Class<?>[] parameterTypes = constructor.getParameterTypes();
-            Object[] args = new Object[parameterTypes.length];
-            boolean supported = true;
-
-            for (int i = 0; i < parameterTypes.length; i++) {
-                Class<?> type = parameterTypes[i];
-                String typeName = type.getName();
-
-                if (type == String.class) {
-                    args[i] = (i == 0) ? translationKey : category;
-                } else if (type == int.class || type == Integer.class) {
-                    args[i] = keyCode;
-                } else if ("net.minecraft.client.util.InputUtil$Type".equals(typeName)) {
-                    args[i] = InputUtil.Type.KEYSYM;
-                } else if ("net.minecraft.client.util.InputUtil$Key".equals(typeName)) {
-                    args[i] = key;
-                } else {
-                    supported = false;
-                    break;
-                }
-            }
-
-            if (!supported) {
-                continue;
-            }
-
-            try {
-                return (KeyBinding) constructor.newInstance(args);
-            } catch (ReflectiveOperationException ignored) {
-                // Try next compatible constructor candidate.
-            }
-        }
-
-        System.err.println("[OreHeightIndicator] Could not create keybinding constructor for this Minecraft version. HUD toggle key is disabled.");
-        return null;
+        return new KeyBinding(
+            "key.oreheightindicator.toggle_hud",
+            InputUtil.Type.KEYSYM,
+            GLFW.GLFW_KEY_H,
+            KEY_CATEGORY
+        );
     }
 }

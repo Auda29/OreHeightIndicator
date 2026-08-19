@@ -1,49 +1,72 @@
 package dev.wecke.oreheightindicator.data;
 
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.item.Item;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
 public final class OreProbabilityService {
-    private static final Comparator<OreChance> CHANCE_DESC = (left, right) -> Float.compare(right.percent(), left.percent());
+    private static final Comparator<OreChance> CHANCE_DESC =
+        (left, right) -> Float.compare(right.relevance(), left.relevance());
 
     private final OreDataProvider provider;
-    private final float[] scoreBuffer;
+    private float[] scoreBuffer;
     private final List<OreChance> sortedChances;
     private int lastY = Integer.MIN_VALUE;
+    private long lastRevision = Long.MIN_VALUE;
 
     public OreProbabilityService(OreDataProvider provider) {
         this.provider = provider;
-        this.scoreBuffer = new float[provider.oreCount()];
-        this.sortedChances = new ArrayList<>(provider.oreCount());
-        for (int i = 0; i < provider.oreCount(); i++) {
-            sortedChances.add(new OreChance(provider.oreName(i), 0.0f));
-        }
+        this.scoreBuffer = new float[0];
+        this.sortedChances = new ArrayList<>();
+        rebuildOreList();
+    }
+
+    public boolean updateIfNeeded(MinecraftClient client, int y) {
+        provider.refresh(client);
+        return updateIfNeeded(y);
     }
 
     public boolean updateIfNeeded(int y) {
-        if (y == lastY) {
+        long revision = provider.revision();
+        if (y == lastY && revision == lastRevision) {
             return false;
+        }
+
+        if (revision != lastRevision || scoreBuffer.length != provider.oreCount()) {
+            rebuildOreList();
+            revision = provider.revision();
         }
 
         int clampedY = Math.max(provider.minY(), Math.min(provider.maxY(), y));
         provider.fillScores(clampedY, scoreBuffer);
 
-        float total = 0.0f;
-        for (float score : scoreBuffer) {
-            if (score > 0.0f) {
-                total += score;
-            }
-        }
-
         for (int i = 0; i < scoreBuffer.length; i++) {
-            float normalized = total > 0.0f ? (scoreBuffer[i] / total) * 100.0f : 0.0f;
-            sortedChances.get(i).setPercent(normalized);
+            float relevance = Math.max(0.0f, Math.min(100.0f, scoreBuffer[i] * 100.0f));
+            sortedChances.get(i).setRelevance(relevance);
         }
 
         sortedChances.sort(CHANCE_DESC);
         lastY = y;
+        lastRevision = revision;
         return true;
+    }
+
+    private void rebuildOreList() {
+        int count = Math.max(0, provider.oreCount());
+        scoreBuffer = new float[count];
+        sortedChances.clear();
+        for (int i = 0; i < count; i++) {
+            sortedChances.add(new OreChance(
+                provider.oreKey(i),
+                provider.oreName(i),
+                provider.oreTranslationKey(i),
+                provider.oreItem(i),
+                0.0f
+            ));
+        }
     }
 
     public List<OreChance> sortedChances() {
@@ -51,24 +74,55 @@ public final class OreProbabilityService {
     }
 
     public static final class OreChance {
+        private final String oreKey;
         private final String oreName;
-        private float percent;
+        private final String translationKey;
+        private final Item iconItem;
+        private float relevance;
 
-        private OreChance(String oreName, float percent) {
+        private OreChance(
+            String oreKey,
+            String oreName,
+            String translationKey,
+            Item iconItem,
+            float relevance
+        ) {
+            this.oreKey = oreKey;
             this.oreName = oreName;
-            this.percent = percent;
+            this.translationKey = translationKey;
+            this.iconItem = iconItem;
+            this.relevance = relevance;
+        }
+
+        public String oreKey() {
+            return oreKey;
         }
 
         public String oreName() {
             return oreName;
         }
 
-        public float percent() {
-            return percent;
+        public String translationKey() {
+            return translationKey;
         }
 
-        private void setPercent(float percent) {
-            this.percent = percent;
+        public Item iconItem() {
+            return iconItem;
+        }
+
+        public float relevance() {
+            return relevance;
+        }
+
+        /**
+         * Kept for source compatibility with the first public version.
+         */
+        public float percent() {
+            return relevance;
+        }
+
+        private void setRelevance(float relevance) {
+            this.relevance = relevance;
         }
     }
 }

@@ -1,113 +1,71 @@
 # Ore Height Indicator
 
-Client-side Fabric mod for Minecraft `1.21.1` that displays the current height (Y) and a sorted list of ore probabilities on the HUD.
+Client-side Fabric mod for Minecraft `1.21.11`. The HUD shows the current Y level and a short, biome-aware list of ores that fit that height.
 
-## Features (Current State)
+## What the HUD shows
 
-- HUD with toggle keybind (`H`)
-- Mod Menu + Cloth Config settings screen
-- Display of the current player height (`Y`)
-- Sorted ore list with percentage values (relative score per height)
-- Ore item icons next to each HUD row (toggleable)
-- Smooth animated row reordering when rankings change
-- Configurable UI scale for the entire HUD
-- Configurable minimum percent threshold to hide low-probability ores
-- Performance-conscious update behavior:
-  - No computation per frame
-  - Tick interval configurable (`updateIntervalTicks`)
-  - Recompute only when height changes
-- Data source architecture prepared:
-  - `StaticVanilla1211Provider` active (wiki-based globally-normalized data)
-  - `DynamicWorldgenProvider` available (experimental MVP, disabled by default)
+- Current Y level
+- Up to four ore rows by default
+- Ore icon and localized block name
+- One small suitability bar per ore
 
-## Compatibility / Stack
+The bar rates the current height against that ore's best height in the active biome. It is not a block probability, and the rows do not add up to 100 percent.
 
-- Minecraft: `1.21.1`
-- Mod Loader: Fabric Loader (`0.18.4` in `gradle.properties`)
-- Fabric API: `0.102.0+1.21.1`
-- Java: `21`
-- Build: Gradle + Fabric Loom
+## Automatic worldgen data
 
-## Project Structure (Key Files)
+There is no provider switch and no downloaded Wiki table in the runtime path.
 
-- Mod entry point: `src/main/java/dev/wecke/oreheightindicator/OreHeightIndicatorClient.java`
-- Config: `src/main/java/dev/wecke/oreheightindicator/config/ModConfig.java`
-- Probability logic: `src/main/java/dev/wecke/oreheightindicator/data/OreProbabilityService.java`
-- HUD rendering: `src/main/java/dev/wecke/oreheightindicator/hud/OreHudRenderer.java`
-- Mod metadata: `src/main/resources/fabric.mod.json`
+In singleplayer, the mod reads the effective registry of the integrated server. This includes active vanilla features, datapacks and modded features that use Minecraft's standard `OreFeatureConfig`.
 
-## Getting Started
+If no integrated server is available, the mod reads the worldgen JSON files from the installed Minecraft and mod classpath. This keeps the fallback tied to the installed game version. A remote server can still use private datapacks that it does not send to clients, so those changes cannot be detected by a client-only installation.
 
-### Local Build
+## Settings
+
+The file is `.minecraft/config/oreheightindicator.json`. Mod Menu and Cloth Config expose the same values.
+
+- `hudEnabled`: show or hide the HUD
+- `hudX`, `hudY`: offset from the top-right corner
+- `showOreIcons`: show ore icons
+- `animateReorder`: animate ranking changes
+- `uiScale`: scale from `0.5` to `3.0`
+- `minimumPercent`: minimum height relevance, despite the legacy field name
+- `maxEntries`: maximum number of ore rows
+- `updateIntervalTicks`: interval for height and biome checks
+
+Press `H` to toggle the HUD.
+
+## Requirements
+
+- Minecraft `1.21.11`
+- Fabric Loader `0.16.0` or newer
+- Fabric API
+- Java `21`
+
+Mod Menu and Cloth Config are optional. Install both to use the in-game settings screen. The JSON configuration file works without them.
+
+## Build
 
 ```bash
 ./gradlew build
 ```
 
-The build artifact will be located in `build/libs/`.
+The JAR is written to `build/libs/`.
 
-### Using in Minecraft
+The tag-based GitHub release process is documented in [Git & GitHub Workflow](docs/workflow/git-github-workflow.md#github-release-flow).
 
-1. Install Fabric for `1.21.1`.
-2. Place the built mod JAR in the `mods` folder.
-3. Start the game and press `H` to toggle the HUD.
+## Stack
 
-## Configuration
+- Minecraft `1.21.11`
+- Fabric Loader `0.18.4`
+- Fabric API `0.141.3+1.21.11`
+- Java `21`
+- Gradle with Fabric Loom
 
-File: `.minecraft/config/oreheightindicator.json` (created on first launch)
+## Main files
 
-Configuration is available in two ways:
-
-- In-game via **Mod Menu** -> Ore Height Indicator -> Config
-- Directly via file: `.minecraft/config/oreheightindicator.json`
-
-### HUD Settings
-
-- `hudEnabled`: Whether the HUD is active by default
-- `hudX`, `hudY`: HUD position offset
-- `showOreIcons`: Show or hide ore item icons for each row
-- `animateReorder`: Smooth row movement when ore ranking changes
-- `uiScale`: Scales the entire HUD size (0.5 - 3.0, default 1.0)
-- `minimumPercent`: Hide ores below this percentage threshold (0.0 - 50.0, default 0.5)
-
-### Data & Performance Settings
-
-- `updateIntervalTicks`: Recalculation interval in ticks (performance lever)
-- `maxEntries`: Maximum number of ore rows shown
-- `useDynamicProvider`: Uses experimental runtime worldgen extraction for vanilla ore placed-features; automatically falls back to static data if initialization fails
-
-## Performance Notes
-
-- The mod is intentionally designed for minimal impact.
-- No heavy worldgen scans in the render path.
-- HUD text is only rebuilt when data changes.
-- If needed, the mod can be quickly throttled via:
-  - Higher `updateIntervalTicks`
-  - `hudEnabled: false`
-
-## Development Workflow
-
-Repository workflows are documented in:
-
-- `docs/workflow/dev-workflow.md`
-- `docs/workflow/git-github-workflow.md`
-- `docs/workflow/manual-test-plan.md`
-- `.taskmaster/docs/README.md`
-
-Quick summary:
-
-1. Use Taskmaster loop: `task-master list --with-subtasks` -> `task-master next` -> `task-master show <id>`
-2. Implement in small steps, then update status/notes
-3. Commits follow Conventional Commits, PR against `main`
-
-## Important Notes
-
-- `task-master parse-prd` requires configured API keys (e.g., `ANTHROPIC_API_KEY` / `PERPLEXITY_API_KEY`) in your environment.
-- Dynamic worldgen extraction is active as an experimental MVP for vanilla ore placed-features. Non-standard/unsupported worldgen cases fall back to static data.
-- Architecture decision documented in `docs/decisions/adr-0001-hybrid-provider-architecture.md`.
-
-## Roadmap (Next Steps)
-
-- Expand dynamic extraction coverage beyond the current vanilla MVP
-- Refine distribution models and accuracy
-- Optional extended UI (e.g., range view)
+- `OreHeightIndicatorClient.java`: client entry point and tick scheduling
+- `AutomaticWorldgenProvider.java`: automatic source selection
+- `RuntimeWorldgenProvider.java`: active integrated-server registries
+- `ClasspathWorldgenProvider.java`: installed-game fallback
+- `OreProbabilityService.java`: relevance calculation and sorting
+- `OreHudRenderer.java`: compact HUD

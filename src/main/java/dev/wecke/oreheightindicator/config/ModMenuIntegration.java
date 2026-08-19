@@ -24,7 +24,7 @@ public final class ModMenuIntegration implements ModMenuApi {
             hud.addEntry(
                 entries.startBooleanToggle(Text.literal("HUD Enabled"), config.hudEnabled)
                     .setDefaultValue(true)
-                    .setTooltip(Text.literal("Shows or hides the ore probability overlay on screen."))
+                    .setTooltip(Text.literal("Shows or hides the compact ore height overlay."))
                     .setSaveConsumer(value -> config.hudEnabled = value)
                     .build()
             );
@@ -74,11 +74,11 @@ public final class ModMenuIntegration implements ModMenuApi {
             );
 
             hud.addEntry(
-                entries.startFloatField(Text.literal("Minimum Percent"), config.minimumPercent != null ? config.minimumPercent : 0.5f)
-                    .setDefaultValue(0.5f)
+                entries.startFloatField(Text.literal("Minimum Relevance"), config.minimumPercent != null ? config.minimumPercent : 10.0f)
+                    .setDefaultValue(10.0f)
                     .setMin(0.0f)
-                    .setMax(50.0f)
-                    .setTooltip(Text.literal("Ores below this percentage are hidden. Set to 0 to show all."))
+                    .setMax(100.0f)
+                    .setTooltip(Text.literal("Hides ores that are poorly suited to the current height. Set to 0 to show all."))
                     .setSaveConsumer(value -> config.minimumPercent = value)
                     .build()
             );
@@ -87,30 +87,17 @@ public final class ModMenuIntegration implements ModMenuApi {
                 entries.startIntField(Text.literal("Update Interval (ticks)"), config.updateIntervalTicks)
                     .setDefaultValue(6)
                     .setMin(1)
-                    .setTooltip(Text.literal("How often ore probabilities are recalculated (20 ticks = 1 second)."))
+                    .setTooltip(Text.literal("How often the current height, biome and ore relevance are checked (20 ticks = 1 second)."))
                     .setSaveConsumer(value -> config.updateIntervalTicks = value)
                     .build()
             );
 
             data.addEntry(
                 entries.startIntField(Text.literal("Max Ore Entries"), config.maxEntries)
-                    .setDefaultValue(6)
+                    .setDefaultValue(4)
                     .setMin(1)
                     .setTooltip(Text.literal("Maximum number of ore rows shown in the HUD list."))
                     .setSaveConsumer(value -> config.maxEntries = value)
-                    .build()
-            );
-
-            data.addEntry(
-                entries.startBooleanToggle(Text.literal("Use Dynamic Provider (experimental)"), config.useDynamicProvider)
-                    .setDefaultValue(false)
-                    .setTooltip(
-                        Text.literal("Reads ore data from worldgen dynamically."),
-                        Text.literal("Requires restart to fully apply."),
-                        Text.literal("Experimental MVP: vanilla ore features only."),
-                        Text.literal("Falls back to static provider if initialization fails.")
-                    )
-                    .setSaveConsumer(value -> config.useDynamicProvider = value)
                     .build()
             );
 

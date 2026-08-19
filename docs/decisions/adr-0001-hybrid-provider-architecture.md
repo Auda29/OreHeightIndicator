@@ -1,51 +1,35 @@
-# ADR 0001: Hybrid Ore Data Provider for Client HUD
+# ADR 0001: Automatic worldgen provider
 
 ## Status
 
-Accepted
+Accepted, replacing the earlier static and experimental-provider decision.
 
 ## Context
 
-Ore Height Indicator needs to show useful ore probabilities in-game without causing visible FPS impact.
-The mod also needs a clean way to evolve from static vanilla data to future dynamic extraction from game/worldgen data.
+The original provider normalized every ore against its own peak and then treated those unrelated values as probabilities. It also relied on a fixed Wiki snapshot. That made cross-ore percentages wrong and ignored the active biome, datapacks and modpacks.
 
-Key constraints:
-
-- Client-side only feature (`Fabric 1.21.1`)
-- Minimal runtime overhead in the render path
-- Extensible architecture for future data provider changes
+The HUD only needs to answer whether the current height is useful for an ore. It does not need to claim an exact block probability.
 
 ## Decision
 
-Use a hybrid provider architecture:
+`AutomaticWorldgenProvider` selects the best source without a user-facing switch.
 
-1. `StaticVanilla1211Provider` is the default provider for MVP.
-2. `OreDataProvider` defines the contract so provider logic is decoupled from UI.
-3. `DynamicWorldgenProvider` is included as an experimental MVP that derives scores from vanilla placed-feature worldgen data and remains disabled by default via config.
-4. If dynamic provider initialization fails, the client automatically falls back to `StaticVanilla1211Provider`.
+In an integrated world, `RuntimeWorldgenProvider` reads the current biome's `GenerationSettings`. It finds configured features that use `OreFeatureConfig`, evaluates their actual placement modifiers on the server thread and rebuilds the snapshot when the dimension or biome changes.
 
-Use strict performance guardrails in runtime flow:
+Without an integrated server, `ClasspathWorldgenProvider` parses biome, placed-feature and configured-feature JSON from the installed Minecraft and mod classpath.
 
-- Recalculate data only on throttled client tick intervals (`updateIntervalTicks`).
-- Recalculate only when Y value changed.
-- Keep render callback lightweight (draw cached lines only, no heavy scans).
-- Skip update work while HUD is hidden.
+Each ore profile is normalized only against that ore's best height. The HUD calls this relevance and draws a bar. It never normalizes different ores to a shared 100 percent total.
 
-## Consequences
+## Limits
 
-Positive:
+- A remote server does not send all placed and configured feature registries to a client.
+- Private server datapacks therefore need a future optional server-side data channel.
+- A mod with a completely custom ore feature config needs a dedicated adapter. Standard `OreFeatureConfig` features work automatically.
+- The provider models height suitability, not the exact number of blocks left in already generated chunks.
 
-- Stable MVP behavior on vanilla `1.21.1`.
-- Easy provider swap later without rewriting HUD or probability service.
-- Predictable performance profile.
+## Performance
 
-Negative:
-
-- Static provider requires maintenance for version changes.
-- Dynamic provider currently targets vanilla placed-feature coverage and may not model every custom datapack/modded worldgen case.
-
-## Follow-up
-
-- Extend dynamic extraction coverage for additional worldgen cases beyond vanilla MVP.
-- Add automatic fallback/warning when dynamic mode is enabled but unsupported.
-- Re-validate static curves whenever target Minecraft version changes.
+- Registry sampling runs on the integrated server thread after a biome or dimension change.
+- The render callback only draws cached rows.
+- The configurable client tick interval controls context checks.
+- No loaded chunks are scanned for hidden ore blocks.

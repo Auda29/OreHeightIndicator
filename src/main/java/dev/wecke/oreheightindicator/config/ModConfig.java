@@ -20,12 +20,11 @@ public final class ModConfig {
     public int hudX = 8;
     public int hudY = 8;
     public int updateIntervalTicks = 6;
-    public int maxEntries = 6;
-    public boolean useDynamicProvider = false;
+    public int maxEntries = 4;
     public Boolean showOreIcons = true;
     public Boolean animateReorder = true;
     public Float uiScale = 1.0f;
-    public Float minimumPercent = 0.5f;
+    public Float minimumPercent = 10.0f;
 
     public static ModConfig load() {
         if (!Files.exists(CONFIG_PATH)) {
@@ -85,8 +84,8 @@ public final class ModConfig {
         }
         uiScale = Math.max(0.5f, Math.min(3.0f, uiScale));
         if (minimumPercent == null) {
-            minimumPercent = 0.5f;
+            minimumPercent = 10.0f;
         }
-        minimumPercent = Math.max(0.0f, Math.min(50.0f, minimumPercent));
+        minimumPercent = Math.max(0.0f, Math.min(100.0f, minimumPercent));
     }
 }

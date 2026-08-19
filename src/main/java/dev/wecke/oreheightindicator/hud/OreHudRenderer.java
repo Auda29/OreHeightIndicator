@@ -12,15 +12,18 @@ import net.minecraft.text.Text;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 
 public final class OreHudRenderer {
-    private static final String TITLE_LINE = "Ore Height Indicator";
     private static final int BG_COLOR = 0x88000000;
     private static final int TEXT_COLOR = 0xFFFFFFFF;
+    private static final int BAR_BG_COLOR = 0x66333333;
+    private static final int BAR_COLOR = 0xFF55CC66;
     private static final int ICON_SIZE = 16;
     private static final int ICON_TEXT_GAP = 2;
-    private static final int HEADER_LINE_COUNT = 2;
+    private static final int BAR_WIDTH = 24;
+    private static final int BAR_HEIGHT = 4;
+    private static final int BAR_GAP = 4;
+    private static final int HEADER_LINE_COUNT = 1;
     private static final float REORDER_ANIMATION_SPEED = 12.0f;
 
     private final ModConfig config;
@@ -35,11 +38,8 @@ public final class OreHudRenderer {
         this.probabilityService = probabilityService;
     }
 
-    public void updateForY(int y) {
-        if (y == cachedY) {
-            return;
-        }
-        if (!probabilityService.updateIfNeeded(y)) {
+    public void update(MinecraftClient client, int y) {
+        if (!probabilityService.updateIfNeeded(client, y)) {
             return;
         }
         cachedY = y;
@@ -57,13 +57,10 @@ public final class OreHudRenderer {
 
         applyAnimationStep();
 
-        int contentWidth = Math.max(
-            textRenderer.getWidth(TITLE_LINE),
-            textRenderer.getWidth("Y: " + cachedY)
-        );
+        int contentWidth = textRenderer.getWidth("Y " + cachedY);
         boolean showIcons = Boolean.TRUE.equals(config.showOreIcons);
         for (AnimatedOreRow row : animatedRows) {
-            int rowWidth = textRenderer.getWidth(row.label);
+            int rowWidth = textRenderer.getWidth(row.label) + BAR_GAP + BAR_WIDTH;
             if (showIcons) {
                 rowWidth += ICON_SIZE + ICON_TEXT_GAP;
             }
@@ -88,8 +85,7 @@ public final class OreHudRenderer {
         int scaledY = Math.round(y / scale);
         context.fill(scaledX, scaledY, scaledX + width, scaledY + height, BG_COLOR);
 
-        drawTextLine(context, textRenderer, scaledX, scaledY + 2, lineHeight, TITLE_LINE);
-        drawTextLine(context, textRenderer, scaledX, scaledY + 2 + lineHeight, lineHeight, "Y: " + cachedY);
+        drawTextLine(context, textRenderer, scaledX, scaledY + 2, lineHeight, "Y " + cachedY);
 
         renderRows.clear();
         renderRows.addAll(animatedRows);
@@ -106,6 +102,14 @@ public final class OreHudRenderer {
                 textX += ICON_SIZE + ICON_TEXT_GAP;
             }
             context.drawText(textRenderer, Text.literal(row.label), textX, textY, TEXT_COLOR, false);
+
+            int barX = scaledX + width - 4 - BAR_WIDTH;
+            int barY = rowTop + ((lineHeight - BAR_HEIGHT) / 2);
+            int filledWidth = Math.round(BAR_WIDTH * Math.max(0.0f, Math.min(1.0f, row.relevance / 100.0f)));
+            context.fill(barX, barY, barX + BAR_WIDTH, barY + BAR_HEIGHT, BAR_BG_COLOR);
+            if (filledWidth > 0) {
+                context.fill(barX, barY, barX + filledWidth, barY + BAR_HEIGHT, BAR_COLOR);
+            }
         }
 
         matrices.popMatrix();
@@ -119,19 +123,25 @@ public final class OreHudRenderer {
                 break;
             }
             float threshold = config.minimumPercent != null ? config.minimumPercent : 0.5f;
-            if (chance.percent() < threshold) {
+            if (chance.relevance() < threshold) {
                 continue;
             }
 
             String oreName = chance.oreName();
-            String label = String.format(Locale.ROOT, "%s: %.1f%%", oreName, chance.percent());
-            AnimatedOreRow existing = findAnimatedRow(oreName);
+            String label = chance.translationKey().isEmpty()
+                ? oreName
+                : Text.translatable(chance.translationKey()).getString();
+            AnimatedOreRow existing = findAnimatedRow(chance.oreKey());
+            ItemStack icon = chance.iconItem() == null || chance.iconItem() == Items.AIR
+                ? iconForOre(oreName)
+                : new ItemStack(chance.iconItem());
 
             if (existing == null) {
-                existing = new AnimatedOreRow(oreName, label, iconForOre(oreName), count);
+                existing = new AnimatedOreRow(chance.oreKey(), label, icon, chance.relevance(), count);
             } else {
                 existing.label = label;
-                existing.icon = iconForOre(oreName);
+                existing.icon = icon;
+                existing.relevance = chance.relevance();
             }
             existing.targetIndex = count;
             nextRows.add(existing);
@@ -156,9 +166,9 @@ public final class OreHudRenderer {
         };
     }
 
-    private AnimatedOreRow findAnimatedRow(String oreName) {
+    private AnimatedOreRow findAnimatedRow(String oreKey) {
         for (AnimatedOreRow row : animatedRows) {
-            if (row.oreName.equals(oreName)) {
+            if (row.oreKey.equals(oreKey)) {
                 return row;
             }
         }
@@ -195,16 +205,18 @@ public final class OreHudRenderer {
     }
 
     private static final class AnimatedOreRow {
-        private final String oreName;
+        private final String oreKey;
         private String label;
         private ItemStack icon;
+        private float relevance;
         private float currentIndex;
         private float targetIndex;
 
-        private AnimatedOreRow(String oreName, String label, ItemStack icon, int startIndex) {
-            this.oreName = oreName;
+        private AnimatedOreRow(String oreKey, String label, ItemStack icon, float relevance, int startIndex) {
+            this.oreKey = oreKey;
             this.label = label;
             this.icon = icon;
+            this.relevance = relevance;
             this.currentIndex = startIndex;
             this.targetIndex = startIndex;
         }

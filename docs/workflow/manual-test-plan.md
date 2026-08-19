@@ -1,54 +1,40 @@
-# Manual Test Plan - Ore Height Indicator MVP
+# Manual test plan
 
-## Preconditions
+## Setup
 
-- Minecraft `1.21.1` with Fabric installed
-- Mod JAR in `mods/`
-- World loaded (creative world recommended for vertical movement tests)
+- Minecraft `1.21.11`
+- Fabric Loader and Fabric API
+- Mod Menu and Cloth Config for settings checks
+- One vanilla world
+- One world with a small ore datapack or modpack
 
-## Functional Checks
+## HUD checks
 
-1. Toggle HUD
-   - Press `H` once: HUD disappears.
-   - Press `H` again: HUD appears.
-   - Pass: toggle is immediate and stable.
+1. Load a world and wait for the first profile build.
+2. Compare the HUD Y value with F3.
+3. Confirm that each row has one icon, one name and one bar. No percentages should appear.
+4. Press `H` twice and confirm immediate hide and show behavior.
+5. Change `maxEntries`, `minimumPercent`, scale, icons, position and animation in Mod Menu. Confirm that each setting still applies.
 
-2. Y display correctness
-   - Compare HUD `Y` value against F3 position.
-   - Move vertically (fly/stairs) and confirm updates.
-   - Pass: values match expected height movement.
+## Worldgen checks
 
-3. Ore list updates
-   - Go to around `Y=-56` and check deep ores rank near top.
-   - Go to around `Y=180` and check Coal becomes dominant.
-   - Pass: ordering changes sensibly with height.
+1. In plains, confirm that emerald is absent.
+2. In a mountain biome, confirm that emerald appears.
+3. In dripstone caves, confirm that the active copper profile changes.
+4. In badlands, confirm that the extra gold feature affects the profile.
+5. In the Nether, confirm that quartz, Nether gold and ancient debris appear while Overworld ores do not.
+6. In the End, confirm that the list is empty unless a datapack or mod adds an ore feature.
 
-4. Config persistence
-   - Toggle HUD and restart game.
-   - Pass: previous `hudEnabled` state is retained in `.minecraft/config/oreheightindicator.json`.
+## Datapack and modpack checks
 
-5. Mod Menu config screen
-   - Open Mod Menu -> select `Ore Height Indicator` -> click `Config`.
-   - Change `HUD X`, `HUD Y`, `Update Interval (ticks)`, and `Max Ore Entries`.
-   - Click `Done` to save.
-   - Pass: values are written to `.minecraft/config/oreheightindicator.json` and apply after returning to world (or restart for provider mode change).
+1. Add a configured feature using `OreFeatureConfig` and attach its placed feature to a biome.
+2. Enter that biome and confirm that the new ore appears with its translated name and block icon.
+3. Change its height placement, reload or reopen the world and confirm that its bar changes at the affected heights.
+4. Remove the feature from the biome and confirm that the row disappears.
 
-## Performance Checks
+## Logs and performance
 
-1. Idle stability
-   - Stand still for 30-60 seconds with HUD visible.
-   - Pass: no visible stutter, no rapid line flicker/rebuild.
-
-2. Movement stability
-   - Move quickly up/down (elytra or creative flight).
-   - Pass: no visible frame spikes while list updates.
-
-3. On/off impact
-   - Compare gameplay feel with HUD hidden vs visible.
-   - Pass: only minimal perceived difference.
-
-## Regression Checks
-
-- HUD hidden path: with `hudEnabled=false`, no overlay should render.
-- Max entries: lowering `maxEntries` in config reduces number of ore lines shown.
-- Update interval: increasing `updateIntervalTicks` reduces refresh frequency as expected.
+1. Check `latest.log` for `Loaded ... ore profiles from active worldgen`.
+2. Cross a biome boundary and confirm one new profile build, not continuous rebuilding.
+3. Stand still for 60 seconds and confirm that rows do not flicker.
+4. Fly vertically and confirm that only cached relevance values update.
