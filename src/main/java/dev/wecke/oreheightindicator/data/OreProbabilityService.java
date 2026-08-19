@@ -13,6 +13,7 @@ public final class OreProbabilityService {
 
     private final OreDataProvider provider;
     private float[] scoreBuffer;
+    private final List<OreChance> chancesByProviderIndex;
     private final List<OreChance> sortedChances;
     private int lastY = Integer.MIN_VALUE;
     private long lastRevision = Long.MIN_VALUE;
@@ -20,6 +21,7 @@ public final class OreProbabilityService {
     public OreProbabilityService(OreDataProvider provider) {
         this.provider = provider;
         this.scoreBuffer = new float[0];
+        this.chancesByProviderIndex = new ArrayList<>();
         this.sortedChances = new ArrayList<>();
         rebuildOreList();
     }
@@ -45,9 +47,11 @@ public final class OreProbabilityService {
 
         for (int i = 0; i < scoreBuffer.length; i++) {
             float relevance = Math.max(0.0f, Math.min(100.0f, scoreBuffer[i] * 100.0f));
-            sortedChances.get(i).setRelevance(relevance);
+            chancesByProviderIndex.get(i).setRelevance(relevance);
         }
 
+        sortedChances.clear();
+        sortedChances.addAll(chancesByProviderIndex);
         sortedChances.sort(CHANCE_DESC);
         lastY = y;
         lastRevision = revision;
@@ -57,15 +61,18 @@ public final class OreProbabilityService {
     private void rebuildOreList() {
         int count = Math.max(0, provider.oreCount());
         scoreBuffer = new float[count];
+        chancesByProviderIndex.clear();
         sortedChances.clear();
         for (int i = 0; i < count; i++) {
-            sortedChances.add(new OreChance(
+            OreChance chance = new OreChance(
                 provider.oreKey(i),
                 provider.oreName(i),
                 provider.oreTranslationKey(i),
                 provider.oreItem(i),
                 0.0f
-            ));
+            );
+            chancesByProviderIndex.add(chance);
+            sortedChances.add(chance);
         }
     }
 

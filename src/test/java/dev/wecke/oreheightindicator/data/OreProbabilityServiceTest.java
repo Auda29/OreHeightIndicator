@@ -65,6 +65,28 @@ class OreProbabilityServiceTest {
         }
     }
 
+    @Test
+    void sortingDoesNotDetachScoresFromTheirOresOnLaterHeightUpdates() {
+        FakeProvider provider = new FakeProvider(new float[] {0.1f, 0.9f, 0.2f}, 0, 10);
+        OreProbabilityService service = new OreProbabilityService(provider);
+
+        service.updateIfNeeded(4);
+        assertEquals(List.of("B", "C", "A"), oreNames(service.sortedChances()));
+
+        provider.setScores(0.8f, 0.1f, 0.3f);
+        service.updateIfNeeded(5);
+
+        List<OreProbabilityService.OreChance> chances = service.sortedChances();
+        assertEquals(List.of("A", "C", "B"), oreNames(chances));
+        assertEquals(80.0f, chances.get(0).relevance(), 1.0e-5f);
+        assertEquals(30.0f, chances.get(1).relevance(), 1.0e-5f);
+        assertEquals(10.0f, chances.get(2).relevance(), 1.0e-5f);
+    }
+
+    private static List<String> oreNames(List<OreProbabilityService.OreChance> chances) {
+        return chances.stream().map(OreProbabilityService.OreChance::oreName).toList();
+    }
+
     private static final class FakeProvider implements OreDataProvider {
         private final float[] scores;
         private final int minY;
@@ -73,9 +95,13 @@ class OreProbabilityServiceTest {
         private int fillScoresCalls = 0;
 
         private FakeProvider(float[] scores, int minY, int maxY) {
-            this.scores = scores;
+            this.scores = scores.clone();
             this.minY = minY;
             this.maxY = maxY;
+        }
+
+        private void setScores(float... nextScores) {
+            System.arraycopy(nextScores, 0, scores, 0, scores.length);
         }
 
         @Override
