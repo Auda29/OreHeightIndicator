@@ -2,16 +2,15 @@ package dev.wecke.oreheightindicator.hud;
 
 import dev.wecke.oreheightindicator.config.ModConfig;
 import dev.wecke.oreheightindicator.data.OreProbabilityService;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.item.Items;
-import net.minecraft.item.ItemStack;
-import net.minecraft.text.Text;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 public final class OreHudRenderer {
     private static final int BG_COLOR = 0x88000000;
@@ -40,30 +39,30 @@ public final class OreHudRenderer {
         this.probabilityService = probabilityService;
     }
 
-    public void update(MinecraftClient client, int y) {
+    public void update(Minecraft client, int y) {
         probabilityService.updateIfNeeded(client, y);
         cachedY = y;
         rebuildLines();
     }
 
-    public void render(DrawContext context) {
+    public void render(GuiGraphicsExtractor context) {
         if (!config.hudEnabled || cachedY == Integer.MIN_VALUE) {
             return;
         }
 
-        MinecraftClient client = MinecraftClient.getInstance();
-        TextRenderer textRenderer = client.textRenderer;
-        int lineHeight = Math.max(textRenderer.fontHeight, ICON_SIZE) + 2;
+        Minecraft client = Minecraft.getInstance();
+        Font textRenderer = client.font;
+        int lineHeight = Math.max(textRenderer.lineHeight, ICON_SIZE) + 2;
 
         applyAnimationStep();
 
-        int contentWidth = textRenderer.getWidth("Y " + cachedY);
+        int contentWidth = textRenderer.width("Y " + cachedY);
         boolean showIcons = Boolean.TRUE.equals(config.showOreIcons);
         boolean showPercent = Boolean.TRUE.equals(config.showSuitabilityPercent);
         int barWidth = showPercent ? PERCENT_BAR_WIDTH : BAR_WIDTH;
         int barHeight = showPercent ? PERCENT_BAR_HEIGHT : BAR_HEIGHT;
         for (AnimatedOreRow row : animatedRows) {
-            int rowWidth = textRenderer.getWidth(row.label) + BAR_GAP + barWidth;
+            int rowWidth = textRenderer.width(row.label) + BAR_GAP + barWidth;
             if (showIcons) {
                 rowWidth += ICON_SIZE + ICON_TEXT_GAP;
             }
@@ -78,9 +77,9 @@ public final class OreHudRenderer {
         int visualWidth = Math.round(width * scale);
         int y = config.hudY;
         // Interpret HUD X as right-edge margin so default placement is top-right.
-        int x = Math.max(0, client.getWindow().getScaledWidth() - visualWidth - config.hudX);
+        int x = Math.max(0, client.getWindow().getGuiScaledWidth() - visualWidth - config.hudX);
 
-        var matrices = context.getMatrices();
+        var matrices = context.pose();
         matrices.pushMatrix();
         matrices.scale(scale, scale);
 
@@ -97,14 +96,14 @@ public final class OreHudRenderer {
             float rowTopFloat = scaledY + 2 + ((HEADER_LINE_COUNT + row.currentIndex) * lineHeight);
             int rowTop = Math.round(rowTopFloat);
             int textX = scaledX + 4;
-            int textY = rowTop + ((lineHeight - textRenderer.fontHeight) / 2);
+            int textY = rowTop + ((lineHeight - textRenderer.lineHeight) / 2);
 
             if (showIcons) {
                 int iconY = rowTop + ((lineHeight - ICON_SIZE) / 2);
-                context.drawItem(row.icon, textX, iconY);
+                context.item(row.icon, textX, iconY);
                 textX += ICON_SIZE + ICON_TEXT_GAP;
             }
-            context.drawText(textRenderer, Text.literal(row.label), textX, textY, TEXT_COLOR, false);
+            context.text(textRenderer, Component.literal(row.label), textX, textY, TEXT_COLOR, false);
 
             int barX = scaledX + width - 4 - barWidth;
             int barY = rowTop + ((lineHeight - barHeight) / 2);
@@ -115,9 +114,9 @@ public final class OreHudRenderer {
             }
             if (showPercent) {
                 String percent = Math.round(row.relevance) + "%";
-                int percentX = barX + ((barWidth - textRenderer.getWidth(percent)) / 2);
-                int percentY = rowTop + ((lineHeight - textRenderer.fontHeight) / 2);
-                context.drawText(textRenderer, Text.literal(percent), percentX, percentY, TEXT_COLOR, true);
+                int percentX = barX + ((barWidth - textRenderer.width(percent)) / 2);
+                int percentY = rowTop + ((lineHeight - textRenderer.lineHeight) / 2);
+                context.text(textRenderer, Component.literal(percent), percentX, percentY, TEXT_COLOR, true);
             }
         }
 
@@ -139,7 +138,7 @@ public final class OreHudRenderer {
             String oreName = chance.oreName();
             String label = chance.translationKey().isEmpty()
                 ? oreName
-                : Text.translatable(chance.translationKey()).getString();
+                : Component.translatable(chance.translationKey()).getString();
             AnimatedOreRow existing = findAnimatedRow(chance.oreKey());
             ItemStack icon = chance.iconItem() == null || chance.iconItem() == Items.AIR
                 ? iconForOre(oreName)
@@ -208,9 +207,9 @@ public final class OreHudRenderer {
         }
     }
 
-    private static void drawTextLine(DrawContext context, TextRenderer textRenderer, int x, int rowTop, int lineHeight, String line) {
-        int textY = rowTop + ((lineHeight - textRenderer.fontHeight) / 2);
-        context.drawText(textRenderer, Text.literal(line), x + 4, textY, TEXT_COLOR, false);
+    private static void drawTextLine(GuiGraphicsExtractor context, Font textRenderer, int x, int rowTop, int lineHeight, String line) {
+        int textY = rowTop + ((lineHeight - textRenderer.lineHeight) / 2);
+        context.text(textRenderer, Component.literal(line), x + 4, textY, TEXT_COLOR, false);
     }
 
     private static final class AnimatedOreRow {

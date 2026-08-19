@@ -4,11 +4,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.item.Item;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -21,6 +16,10 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.IntToDoubleFunction;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.Item;
 
 /**
  * Reads built-in worldgen data from the installed Minecraft and mod classpath.
@@ -33,22 +32,22 @@ public final class ClasspathWorldgenProvider implements OreDataProvider {
     private volatile String requestedContext = "";
 
     @Override
-    public void refresh(MinecraftClient client) {
-        if (client == null || client.player == null || client.world == null) {
+    public void refresh(Minecraft client) {
+        if (client == null || client.player == null || client.level == null) {
             return;
         }
 
-        Identifier biomeId = client.world.getBiome(client.player.getBlockPos())
-            .getKey()
-            .map(key -> key.getValue())
+        Identifier biomeId = client.level.getBiome(client.player.blockPosition())
+            .unwrapKey()
+            .map(key -> key.identifier())
             .orElse(null);
         if (biomeId == null) {
             return;
         }
 
-        int minY = client.world.getBottomY();
-        int maxY = client.world.getTopYInclusive();
-        String contextKey = client.world.getRegistryKey().getValue() + "|" + biomeId + "|" + minY + "|" + maxY;
+        int minY = client.level.getMinY();
+        int maxY = client.level.getMaxY();
+        String contextKey = client.level.dimension().identifier() + "|" + biomeId + "|" + minY + "|" + maxY;
         if (contextKey.equals(requestedContext) || contextKey.equals(snapshot.contextKey)) {
             return;
         }
@@ -416,7 +415,7 @@ public final class ClasspathWorldgenProvider implements OreDataProvider {
 
     @Override
     public String oreName(int index) {
-        String path = Identifier.of(snapshot.ores.get(index).descriptor.key).getPath().replace('_', ' ');
+        String path = Identifier.parse(snapshot.ores.get(index).descriptor.key).getPath().replace('_', ' ');
         return path.substring(0, 1).toUpperCase(Locale.ROOT) + path.substring(1);
     }
 
@@ -433,7 +432,7 @@ public final class ClasspathWorldgenProvider implements OreDataProvider {
     @Override
     public Item oreItem(int index) {
         Identifier blockId = snapshot.ores.get(index).descriptor.blockId;
-        return Registries.BLOCK.getOptionalValue(blockId).map(block -> block.asItem()).orElse(null);
+        return BuiltInRegistries.BLOCK.getOptional(blockId).map(block -> block.asItem()).orElse(null);
     }
 
     @Override

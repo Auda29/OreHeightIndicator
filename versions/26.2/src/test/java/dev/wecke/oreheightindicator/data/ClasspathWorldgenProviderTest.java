@@ -1,9 +1,9 @@
 package dev.wecke.oreheightindicator.data;
 
-import net.minecraft.util.Identifier;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import net.minecraft.resources.Identifier;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -13,7 +13,7 @@ class ClasspathWorldgenProviderTest {
     void plainsProfileComesFromInstalledMinecraftWorldgenData() {
         ClasspathWorldgenProvider.Snapshot snapshot = ClasspathWorldgenProvider.buildSnapshot(
             "test-plains",
-            Identifier.of("minecraft", "plains"),
+            Identifier.fromNamespaceAndPath("minecraft", "plains"),
             -64,
             319,
             1L
@@ -36,14 +36,14 @@ class ClasspathWorldgenProviderTest {
     void mountainAndNetherBiomesSelectTheirOwnOreFeatures() {
         ClasspathWorldgenProvider.Snapshot mountain = ClasspathWorldgenProvider.buildSnapshot(
             "test-mountain",
-            Identifier.of("minecraft", "stony_peaks"),
+            Identifier.fromNamespaceAndPath("minecraft", "stony_peaks"),
             -64,
             319,
             2L
         );
         ClasspathWorldgenProvider.Snapshot nether = ClasspathWorldgenProvider.buildSnapshot(
             "test-nether",
-            Identifier.of("minecraft", "nether_wastes"),
+            Identifier.fromNamespaceAndPath("minecraft", "nether_wastes"),
             0,
             127,
             3L

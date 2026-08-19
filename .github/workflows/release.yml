@@ -65,7 +65,8 @@ jobs:
 
           {
             echo "version=${project_version}"
-            echo "jar_path=build/libs/${archive_name}-${project_version}.jar"
+            echo "jar_1_21_11_path=build/libs/${archive_name}-${project_version}+mc1.21.11.jar"
+            echo "jar_26_2_path=versions/26.2/build/libs/${archive_name}-${project_version}+mc26.2.jar"
             echo "tag=${expected_tag}"
             echo "should_release=${should_release}"
           } >> "${GITHUB_OUTPUT}"
@@ -83,32 +84,51 @@ jobs:
         with:
           cache-provider: basic
 
-      - name: Build and test
+      - name: Build and test for Minecraft 1.21.11
         if: steps.release_metadata.outputs.should_release == 'true'
         shell: bash
         run: |
           chmod +x gradlew
           ./gradlew --no-daemon clean build
 
+      - name: Set up Java 25
+        if: steps.release_metadata.outputs.should_release == 'true'
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Build and test for Minecraft 26.2
+        if: steps.release_metadata.outputs.should_release == 'true'
+        shell: bash
+        run: ./gradlew --no-daemon -p versions/26.2 clean build
+
       - name: Prepare release assets
         if: steps.release_metadata.outputs.should_release == 'true'
         id: release_assets
         shell: bash
         env:
-          JAR_PATH: ${{ steps.release_metadata.outputs.jar_path }}
+          JAR_1_21_11_PATH: ${{ steps.release_metadata.outputs.jar_1_21_11_path }}
+          JAR_26_2_PATH: ${{ steps.release_metadata.outputs.jar_26_2_path }}
         run: |
           set -euo pipefail
 
-          if [[ ! -s "${JAR_PATH}" ]]; then
-            echo "::error::Expected release artifact was not created: ${JAR_PATH}"
-            find build/libs -maxdepth 1 -type f -print || true
-            exit 1
-          fi
+          for jar_path in "${JAR_1_21_11_PATH}" "${JAR_26_2_PATH}"; do
+            if [[ ! -s "${jar_path}" ]]; then
+              echo "::error::Expected release artifact was not created: ${jar_path}"
+              find build/libs versions/26.2/build/libs -maxdepth 1 -type f -print || true
+              exit 1
+            fi
 
-          checksum_path="${JAR_PATH}.sha256"
-          checksum="$(sha256sum "${JAR_PATH}" | awk '{ print $1 }')"
-          printf '%s  %s\n' "${checksum}" "$(basename "${JAR_PATH}")" > "${checksum_path}"
-          echo "checksum_path=${checksum_path}" >> "${GITHUB_OUTPUT}"
+            checksum_path="${jar_path}.sha256"
+            checksum="$(sha256sum "${jar_path}" | awk '{ print $1 }')"
+            printf '%s  %s\n' "${checksum}" "$(basename "${jar_path}")" > "${checksum_path}"
+          done
+
+          {
+            echo "checksum_1_21_11_path=${JAR_1_21_11_PATH}.sha256"
+            echo "checksum_26_2_path=${JAR_26_2_PATH}.sha256"
+          } >> "${GITHUB_OUTPUT}"
 
       - name: Create the release tag
         if: github.ref == 'refs/heads/main' && steps.release_metadata.outputs.should_release == 'true'
@@ -137,24 +157,31 @@ jobs:
         if: steps.release_metadata.outputs.should_release == 'true'
         shell: bash
         env:
-          CHECKSUM_PATH: ${{ steps.release_assets.outputs.checksum_path }}
+          CHECKSUM_1_21_11_PATH: ${{ steps.release_assets.outputs.checksum_1_21_11_path }}
+          CHECKSUM_26_2_PATH: ${{ steps.release_assets.outputs.checksum_26_2_path }}
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
-          JAR_PATH: ${{ steps.release_metadata.outputs.jar_path }}
+          JAR_1_21_11_PATH: ${{ steps.release_metadata.outputs.jar_1_21_11_path }}
+          JAR_26_2_PATH: ${{ steps.release_metadata.outputs.jar_26_2_path }}
           PROJECT_VERSION: ${{ steps.release_metadata.outputs.version }}
           RELEASE_TAG: ${{ steps.release_metadata.outputs.tag }}
         run: |
           set -euo pipefail
 
           if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
-            gh release upload "${RELEASE_TAG}" "${JAR_PATH}" "${CHECKSUM_PATH}" --clobber
+            gh release upload "${RELEASE_TAG}" \
+              "${JAR_1_21_11_PATH}" "${CHECKSUM_1_21_11_PATH}" \
+              "${JAR_26_2_PATH}" "${CHECKSUM_26_2_PATH}" \
+              --clobber
             exit 0
           fi
 
           release_args=(
             "${RELEASE_TAG}"
-            "${JAR_PATH}"
-            "${CHECKSUM_PATH}"
+            "${JAR_1_21_11_PATH}"
+            "${CHECKSUM_1_21_11_PATH}"
+            "${JAR_26_2_PATH}"
+            "${CHECKSUM_26_2_PATH}"
             --verify-tag
             --generate-notes
             --title "Ore Height Indicator ${PROJECT_VERSION}"

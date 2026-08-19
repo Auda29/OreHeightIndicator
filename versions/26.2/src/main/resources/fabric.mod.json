@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "oreheightindicator",
+  "version": "${version}",
+  "name": "Ore Height Indicator",
+  "description": "Shows a compact, worldgen-aware ore height guide for the current biome.",
+  "authors": [
+    "Auda29"
+  ],
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "dev.wecke.oreheightindicator.OreHeightIndicatorClient"
+    ],
+    "modmenu": [
+      "dev.wecke.oreheightindicator.config.ModMenuIntegration"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "minecraft": "~26.2",
+    "java": ">=25",
+    "fabric-api": "*"
+  },
+  "suggests": {
+    "modmenu": "*",
+    "cloth-config": "*"
+  }
+}

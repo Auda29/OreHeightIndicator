@@ -50,10 +50,11 @@ jobs:
 
           project_version="$(awk -F= '$1 == "mod_version" { print $2 }' gradle.properties | tr -d '\r')"
           archive_name="$(awk -F= '$1 == "archives_base_name" { print $2 }' gradle.properties | tr -d '\r')"
-          minecraft_version="$(awk -F= '$1 == "minecraft_version" { print $2 }' gradle.properties | tr -d '\r')"
+          minecraft_1_21_11="$(awk -F= '$1 == "minecraft_version" { print $2 }' gradle.properties | tr -d '\r')"
+          minecraft_26_2="$(awk -F= '$1 == "minecraft_version" { print $2 }' versions/26.2/gradle.properties | tr -d '\r')"
 
-          if [[ -z "${project_version}" || -z "${archive_name}" || -z "${minecraft_version}" ]]; then
-            echo "::error file=gradle.properties::mod_version, archives_base_name and minecraft_version must be set."
+          if [[ -z "${project_version}" || -z "${archive_name}" || -z "${minecraft_1_21_11}" || -z "${minecraft_26_2}" ]]; then
+            echo "::error::The mod version, archive name and both Minecraft versions must be set."
             exit 1
           fi
 
@@ -86,10 +87,13 @@ jobs:
 
           {
             echo "version=${project_version}"
-            echo "minecraft_version=${minecraft_version}"
+            echo "minecraft_1_21_11=${minecraft_1_21_11}"
+            echo "minecraft_26_2=${minecraft_26_2}"
             echo "tag=${release_tag}"
-            echo "jar_name=${archive_name}-${project_version}.jar"
-            echo "checksum_name=${archive_name}-${project_version}.jar.sha256"
+            echo "jar_1_21_11_name=${archive_name}-${project_version}+mc1.21.11.jar"
+            echo "jar_26_2_name=${archive_name}-${project_version}+mc26.2.jar"
+            echo "checksum_1_21_11_name=${archive_name}-${project_version}+mc1.21.11.jar.sha256"
+            echo "checksum_26_2_name=${archive_name}-${project_version}+mc26.2.jar.sha256"
             echo "release_type=${release_type}"
             echo "should_publish=${should_publish}"
           } >> "${GITHUB_OUTPUT}"
@@ -98,10 +102,12 @@ jobs:
         if: steps.release_metadata.outputs.should_publish == 'true'
         shell: bash
         env:
-          CHECKSUM_NAME: ${{ steps.release_metadata.outputs.checksum_name }}
+          CHECKSUM_1_21_11_NAME: ${{ steps.release_metadata.outputs.checksum_1_21_11_name }}
+          CHECKSUM_26_2_NAME: ${{ steps.release_metadata.outputs.checksum_26_2_name }}
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
-          JAR_NAME: ${{ steps.release_metadata.outputs.jar_name }}
+          JAR_1_21_11_NAME: ${{ steps.release_metadata.outputs.jar_1_21_11_name }}
+          JAR_26_2_NAME: ${{ steps.release_metadata.outputs.jar_26_2_name }}
           RELEASE_TAG: ${{ steps.release_metadata.outputs.tag }}
         run: |
           set -euo pipefail
@@ -109,18 +115,25 @@ jobs:
           mkdir -p dist
           gh release download "${RELEASE_TAG}" \
             --repo "${GH_REPO}" \
-            --pattern "${JAR_NAME}" \
-            --pattern "${CHECKSUM_NAME}" \
+            --pattern "${JAR_1_21_11_NAME}" \
+            --pattern "${CHECKSUM_1_21_11_NAME}" \
+            --pattern "${JAR_26_2_NAME}" \
+            --pattern "${CHECKSUM_26_2_NAME}" \
             --dir dist
 
-          if [[ ! -s "dist/${JAR_NAME}" || ! -s "dist/${CHECKSUM_NAME}" ]]; then
-            echo "::error::The GitHub release is missing the JAR or SHA-256 asset."
-            exit 1
-          fi
+          for asset_name in \
+            "${JAR_1_21_11_NAME}" "${CHECKSUM_1_21_11_NAME}" \
+            "${JAR_26_2_NAME}" "${CHECKSUM_26_2_NAME}"; do
+            if [[ ! -s "dist/${asset_name}" ]]; then
+              echo "::error::The GitHub release is missing ${asset_name}."
+              exit 1
+            fi
+          done
 
           (
             cd dist
-            sha256sum --check "${CHECKSUM_NAME}"
+            sha256sum --check "${CHECKSUM_1_21_11_NAME}"
+            sha256sum --check "${CHECKSUM_26_2_NAME}"
           )
 
       - name: Prepare CurseForge metadata
@@ -129,7 +142,8 @@ jobs:
         env:
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
-          MINECRAFT_VERSION: ${{ steps.release_metadata.outputs.minecraft_version }}
+          MINECRAFT_1_21_11: ${{ steps.release_metadata.outputs.minecraft_1_21_11 }}
+          MINECRAFT_26_2: ${{ steps.release_metadata.outputs.minecraft_26_2 }}
           PROJECT_VERSION: ${{ steps.release_metadata.outputs.version }}
           RELEASE_TAG: ${{ steps.release_metadata.outputs.tag }}
           RELEASE_TYPE: ${{ steps.release_metadata.outputs.release_type }}
@@ -145,25 +159,33 @@ jobs:
             printf 'Release %s\n' "${RELEASE_TAG}" > dist/changelog.md
           fi
 
-          jq -n \
-            --rawfile changelog dist/changelog.md \
-            --arg display_name "Ore Height Indicator ${PROJECT_VERSION}" \
-            --arg minecraft_version "${MINECRAFT_VERSION}" \
-            --arg release_type "${RELEASE_TYPE}" \
-            '{
-              changelog: $changelog,
-              changelogType: "markdown",
-              displayName: $display_name,
-              gameVersionNames: [$minecraft_version, "Fabric", "Client"],
-              releaseType: $release_type,
-              relations: {
-                projects: [
-                  {slug: "fabric-api", type: "requiredDependency"},
-                  {slug: "modmenu", type: "optionalDependency"},
-                  {slug: "cloth-config", type: "optionalDependency"}
-                ]
-              }
-            }' > dist/curseforge-metadata.json
+          create_metadata() {
+            local minecraft_version="$1"
+            local output_path="$2"
+
+            jq -n \
+              --rawfile changelog dist/changelog.md \
+              --arg display_name "Ore Height Indicator ${PROJECT_VERSION} for Minecraft ${minecraft_version}" \
+              --arg minecraft_version "${minecraft_version}" \
+              --arg release_type "${RELEASE_TYPE}" \
+              '{
+                changelog: $changelog,
+                changelogType: "markdown",
+                displayName: $display_name,
+                gameVersionNames: [$minecraft_version, "Fabric", "Client"],
+                releaseType: $release_type,
+                relations: {
+                  projects: [
+                    {slug: "fabric-api", type: "requiredDependency"},
+                    {slug: "modmenu", type: "optionalDependency"},
+                    {slug: "cloth-config", type: "optionalDependency"}
+                  ]
+                }
+              }' > "${output_path}"
+          }
+
+          create_metadata "${MINECRAFT_1_21_11}" dist/curseforge-metadata-1.21.11.json
+          create_metadata "${MINECRAFT_26_2}" dist/curseforge-metadata-26.2.json
 
       - name: Upload the CurseForge release
         if: steps.release_metadata.outputs.should_publish == 'true'
@@ -172,8 +194,10 @@ jobs:
         env:
           CURSEFORGE_API_TOKEN: ${{ secrets.CURSEFORGE_API_TOKEN }}
           CURSEFORGE_PROJECT_ID: ${{ vars.CURSEFORGE_PROJECT_ID }}
-          JAR_NAME: ${{ steps.release_metadata.outputs.jar_name }}
-          MINECRAFT_VERSION: ${{ steps.release_metadata.outputs.minecraft_version }}
+          JAR_1_21_11_NAME: ${{ steps.release_metadata.outputs.jar_1_21_11_name }}
+          JAR_26_2_NAME: ${{ steps.release_metadata.outputs.jar_26_2_name }}
+          MINECRAFT_1_21_11: ${{ steps.release_metadata.outputs.minecraft_1_21_11 }}
+          MINECRAFT_26_2: ${{ steps.release_metadata.outputs.minecraft_26_2 }}
           PROJECT_VERSION: ${{ steps.release_metadata.outputs.version }}
           RELEASE_TYPE: ${{ steps.release_metadata.outputs.release_type }}
         run: |
@@ -189,35 +213,49 @@ jobs:
             exit 1
           fi
 
-          response_file="$(mktemp)"
-          trap 'rm -f "${response_file}"' EXIT
-          metadata_json="$(jq -c '.' dist/curseforge-metadata.json)"
+          upload_file() {
+            local jar_name="$1"
+            local metadata_path="$2"
+            local response_file
+            local metadata_json
+            local http_status
 
-          http_status="$(
-            curl --silent --show-error \
-              --output "${response_file}" \
-              --write-out '%{http_code}' \
-              --request POST \
-              --header "X-Api-Token: ${CURSEFORGE_API_TOKEN}" \
-              --form-string "metadata=${metadata_json}" \
-              --form "file=@dist/${JAR_NAME};type=application/java-archive" \
-              "https://minecraft.curseforge.com/api/projects/${CURSEFORGE_PROJECT_ID}/upload-file"
-          )"
+            response_file="$(mktemp)"
+            metadata_json="$(jq -c '.' "${metadata_path}")"
+            http_status="$(
+              curl --silent --show-error \
+                --output "${response_file}" \
+                --write-out '%{http_code}' \
+                --request POST \
+                --header "X-Api-Token: ${CURSEFORGE_API_TOKEN}" \
+                --form-string "metadata=${metadata_json}" \
+                --form "file=@dist/${jar_name};type=application/java-archive" \
+                "https://minecraft.curseforge.com/api/projects/${CURSEFORGE_PROJECT_ID}/upload-file"
+            )"
 
-          if [[ ! "${http_status}" =~ ^2[0-9][0-9]$ ]]; then
-            echo "::error::CurseForge rejected the upload with HTTP ${http_status}."
-            cat "${response_file}"
-            exit 1
-          fi
+            if [[ ! "${http_status}" =~ ^2[0-9][0-9]$ ]]; then
+              echo "::error::CurseForge rejected ${jar_name} with HTTP ${http_status}." >&2
+              cat "${response_file}" >&2
+              rm -f "${response_file}"
+              return 1
+            fi
 
-          file_id="$(jq -er '.id' "${response_file}")"
-          echo "file_id=${file_id}" >> "${GITHUB_OUTPUT}"
+            jq -er '.id' "${response_file}"
+            rm -f "${response_file}"
+          }
+
+          file_1_21_11_id="$(upload_file "${JAR_1_21_11_NAME}" dist/curseforge-metadata-1.21.11.json)"
+          file_26_2_id="$(upload_file "${JAR_26_2_NAME}" dist/curseforge-metadata-26.2.json)"
+          {
+            echo "file_1_21_11_id=${file_1_21_11_id}"
+            echo "file_26_2_id=${file_26_2_id}"
+          } >> "${GITHUB_OUTPUT}"
 
           {
             echo "## CurseForge release"
             echo
             echo "- Version: ${PROJECT_VERSION}"
-            echo "- Minecraft: ${MINECRAFT_VERSION}"
             echo "- Release type: ${RELEASE_TYPE}"
-            echo "- CurseForge file ID: ${file_id}"
+            echo "- Minecraft ${MINECRAFT_1_21_11}: file ID ${file_1_21_11_id}"
+            echo "- Minecraft ${MINECRAFT_26_2}: file ID ${file_26_2_id}"
           } >> "${GITHUB_STEP_SUMMARY}"

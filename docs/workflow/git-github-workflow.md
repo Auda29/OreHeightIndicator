@@ -36,15 +36,16 @@ Write commit messages, pull request titles, tag messages, and release notes in E
 
 1. Merge the release changes into `main`.
 2. Set `mod_version` in `gradle.properties`, for example `0.1.0`.
-3. Run a clean local build:
+3. Run clean local builds with Java 21 and Java 25 respectively:
 
    ```powershell
    .\gradlew.bat clean build
+   .\gradlew.bat -p versions\26.2 clean build
    ```
 
 4. Commit and push the version change to `main`.
 
-The workflow validates the version, builds the project with Java 21, and runs the tests. If the matching tag does not exist, it creates an annotated tag on the `main` commit. It then creates the GitHub release and attaches the production JAR and a SHA-256 checksum. Versions containing a suffix such as `0.2.0-beta.1` are published as prereleases.
+The workflow validates the version and runs the 1.21.11 test suite with Java 21 and the 26.2 test suite with Java 25. If the matching tag does not exist, it creates an annotated tag on the `main` commit. It then creates the GitHub release and attaches both version-specific production JARs and their SHA-256 checksums. Versions containing a suffix such as `0.2.0-beta.1` are published as prereleases.
 
 Manually creating and pushing the matching annotated tag remains supported when a release needs to start from an explicit tag operation.
 
@@ -76,11 +77,11 @@ The token is entered with hidden input and is sent directly to GitHub. The wizar
 For every new version, the GitHub release workflow builds and tests the mod first. After that workflow succeeds, the CurseForge workflow:
 
 1. Confirms that the version tag points to the released commit.
-2. Downloads the production JAR and SHA-256 file from the GitHub release.
-3. Verifies the JAR checksum.
+2. Downloads both production JARs and SHA-256 files from the GitHub release.
+3. Verifies both JAR checksums.
 4. Reuses the GitHub release notes as the CurseForge changelog.
-5. Reads the Minecraft and mod versions from `gradle.properties`.
-6. Uploads the file through the official CurseForge Upload API.
+5. Reads the Minecraft versions from both Gradle projects.
+6. Uploads one correctly classified CurseForge file for Minecraft 1.21.11 and one for Minecraft 26.2 through the official CurseForge Upload API.
 
 Stable versions use the CurseForge `release` type. Versions containing `alpha` use `alpha`; other suffixed versions use `beta`. The workflow marks Fabric API as required and Mod Menu and Cloth Config as optional dependencies.
 
