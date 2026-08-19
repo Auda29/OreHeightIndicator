@@ -1,0 +1,223 @@
+name: Publish CurseForge
+
+on:
+  workflow_run:
+    workflows:
+      - Release
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing GitHub release tag to upload. Do not reuse a tag already published on CurseForge.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: curseforge-${{ github.repository }}-${{ github.event.workflow_run.id || inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish CurseForge release
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the released source
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.event.workflow_run.head_sha }}
+
+      - name: Resolve CurseForge release metadata
+        id: release_metadata
+        shell: bash
+        env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          MANUAL_TAG: ${{ inputs.tag }}
+          TRIGGER_EVENT: ${{ github.event_name }}
+          WORKFLOW_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+
+          project_version="$(awk -F= '$1 == "mod_version" { print $2 }' gradle.properties | tr -d '\r')"
+          archive_name="$(awk -F= '$1 == "archives_base_name" { print $2 }' gradle.properties | tr -d '\r')"
+          minecraft_version="$(awk -F= '$1 == "minecraft_version" { print $2 }' gradle.properties | tr -d '\r')"
+
+          if [[ -z "${project_version}" || -z "${archive_name}" || -z "${minecraft_version}" ]]; then
+            echo "::error file=gradle.properties::mod_version, archives_base_name and minecraft_version must be set."
+            exit 1
+          fi
+
+          expected_tag="v${project_version}"
+          release_tag="${MANUAL_TAG:-${expected_tag}}"
+          should_publish="true"
+
+          if [[ "${release_tag}" != "${expected_tag}" ]]; then
+            echo "::error file=gradle.properties::Tag ${release_tag} does not match mod_version ${project_version}. Expected ${expected_tag}."
+            exit 1
+          fi
+
+          if [[ "${TRIGGER_EVENT}" == "workflow_run" ]]; then
+            tagged_commit="$(gh api "repos/${GH_REPO}/commits/${expected_tag}" --jq '.sha')"
+
+            if [[ "${tagged_commit}" != "${WORKFLOW_HEAD_SHA}" ]]; then
+              should_publish="false"
+              echo "Tag ${expected_tag} does not point to this Release workflow commit. No CurseForge upload is needed."
+            fi
+          fi
+
+          normalized_version="${project_version,,}"
+          if [[ "${normalized_version}" == *alpha* ]]; then
+            release_type="alpha"
+          elif [[ "${normalized_version}" == *beta* || "${normalized_version}" == *rc* || "${normalized_version}" == *pre* || "${normalized_version}" == *-* ]]; then
+            release_type="beta"
+          else
+            release_type="release"
+          fi
+
+          {
+            echo "version=${project_version}"
+            echo "minecraft_version=${minecraft_version}"
+            echo "tag=${release_tag}"
+            echo "jar_name=${archive_name}-${project_version}.jar"
+            echo "checksum_name=${archive_name}-${project_version}.jar.sha256"
+            echo "release_type=${release_type}"
+            echo "should_publish=${should_publish}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Download and verify GitHub release assets
+        if: steps.release_metadata.outputs.should_publish == 'true'
+        shell: bash
+        env:
+          CHECKSUM_NAME: ${{ steps.release_metadata.outputs.checksum_name }}
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          JAR_NAME: ${{ steps.release_metadata.outputs.jar_name }}
+          RELEASE_TAG: ${{ steps.release_metadata.outputs.tag }}
+        run: |
+          set -euo pipefail
+
+          mkdir -p dist
+          gh release download "${RELEASE_TAG}" \
+            --repo "${GH_REPO}" \
+            --pattern "${JAR_NAME}" \
+            --pattern "${CHECKSUM_NAME}" \
+            --dir dist
+
+          if [[ ! -s "dist/${JAR_NAME}" || ! -s "dist/${CHECKSUM_NAME}" ]]; then
+            echo "::error::The GitHub release is missing the JAR or SHA-256 asset."
+            exit 1
+          fi
+
+          (
+            cd dist
+            sha256sum --check "${CHECKSUM_NAME}"
+          )
+
+      - name: Prepare CurseForge metadata
+        if: steps.release_metadata.outputs.should_publish == 'true'
+        shell: bash
+        env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          MINECRAFT_VERSION: ${{ steps.release_metadata.outputs.minecraft_version }}
+          PROJECT_VERSION: ${{ steps.release_metadata.outputs.version }}
+          RELEASE_TAG: ${{ steps.release_metadata.outputs.tag }}
+          RELEASE_TYPE: ${{ steps.release_metadata.outputs.release_type }}
+        run: |
+          set -euo pipefail
+
+          gh release view "${RELEASE_TAG}" \
+            --repo "${GH_REPO}" \
+            --json body \
+            --jq '.body' > dist/changelog.md
+
+          if [[ ! -s dist/changelog.md ]]; then
+            printf 'Release %s\n' "${RELEASE_TAG}" > dist/changelog.md
+          fi
+
+          jq -n \
+            --rawfile changelog dist/changelog.md \
+            --arg display_name "Ore Height Indicator ${PROJECT_VERSION}" \
+            --arg minecraft_version "${MINECRAFT_VERSION}" \
+            --arg release_type "${RELEASE_TYPE}" \
+            '{
+              changelog: $changelog,
+              changelogType: "markdown",
+              displayName: $display_name,
+              gameVersionNames: [$minecraft_version, "Fabric", "Client"],
+              releaseType: $release_type,
+              relations: {
+                projects: [
+                  {slug: "fabric-api", type: "requiredDependency"},
+                  {slug: "modmenu", type: "optionalDependency"},
+                  {slug: "cloth-config", type: "optionalDependency"}
+                ]
+              }
+            }' > dist/curseforge-metadata.json
+
+      - name: Upload the CurseForge release
+        if: steps.release_metadata.outputs.should_publish == 'true'
+        id: curseforge_upload
+        shell: bash
+        env:
+          CURSEFORGE_API_TOKEN: ${{ secrets.CURSEFORGE_API_TOKEN }}
+          CURSEFORGE_PROJECT_ID: ${{ vars.CURSEFORGE_PROJECT_ID }}
+          JAR_NAME: ${{ steps.release_metadata.outputs.jar_name }}
+          MINECRAFT_VERSION: ${{ steps.release_metadata.outputs.minecraft_version }}
+          PROJECT_VERSION: ${{ steps.release_metadata.outputs.version }}
+          RELEASE_TYPE: ${{ steps.release_metadata.outputs.release_type }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${CURSEFORGE_API_TOKEN}" ]]; then
+            echo "::error::CURSEFORGE_API_TOKEN is not configured as a GitHub Actions secret."
+            exit 1
+          fi
+
+          if [[ ! "${CURSEFORGE_PROJECT_ID}" =~ ^[0-9]+$ ]]; then
+            echo "::error::CURSEFORGE_PROJECT_ID must be configured as a numeric GitHub Actions variable."
+            exit 1
+          fi
+
+          response_file="$(mktemp)"
+          trap 'rm -f "${response_file}"' EXIT
+          metadata_json="$(jq -c '.' dist/curseforge-metadata.json)"
+
+          http_status="$(
+            curl --silent --show-error \
+              --output "${response_file}" \
+              --write-out '%{http_code}' \
+              --request POST \
+              --header "X-Api-Token: ${CURSEFORGE_API_TOKEN}" \
+              --form-string "metadata=${metadata_json}" \
+              --form "file=@dist/${JAR_NAME};type=application/java-archive" \
+              "https://minecraft.curseforge.com/api/projects/${CURSEFORGE_PROJECT_ID}/upload-file"
+          )"
+
+          if [[ ! "${http_status}" =~ ^2[0-9][0-9]$ ]]; then
+            echo "::error::CurseForge rejected the upload with HTTP ${http_status}."
+            cat "${response_file}"
+            exit 1
+          fi
+
+          file_id="$(jq -er '.id' "${response_file}")"
+          echo "file_id=${file_id}" >> "${GITHUB_OUTPUT}"
+
+          {
+            echo "## CurseForge release"
+            echo
+            echo "- Version: ${PROJECT_VERSION}"
+            echo "- Minecraft: ${MINECRAFT_VERSION}"
+            echo "- Release type: ${RELEASE_TYPE}"
+            echo "- CurseForge file ID: ${file_id}"
+          } >> "${GITHUB_STEP_SUMMARY}"

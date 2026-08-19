@@ -51,7 +51,7 @@ Mod Menu and Cloth Config are optional. Install both to use the in-game settings
 
 The JAR is written to `build/libs/`.
 
-The tag-based GitHub release process is documented in [Git & GitHub Workflow](docs/workflow/git-github-workflow.md#github-release-flow).
+The automated [GitHub release](docs/workflow/git-github-workflow.md#github-release-flow) and [CurseForge release](docs/workflow/git-github-workflow.md#curseforge-release-flow) processes are documented in the workflow guide. The one-time CurseForge credential setup uses [`scripts/setup-curseforge.sh`](scripts/setup-curseforge.sh).
 
 ## Stack
 
