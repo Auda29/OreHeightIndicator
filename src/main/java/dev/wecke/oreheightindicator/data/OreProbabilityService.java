@@ -73,6 +73,11 @@ public final class OreProbabilityService {
             );
             chancesByProviderIndex.add(chance);
             sortedChances.add(chance);
+            OreDisplayCatalog.remember(
+                chance.oreKey(),
+                chance.oreName(),
+                chance.translationKey()
+            );
         }
     }
 

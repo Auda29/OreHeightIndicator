@@ -29,8 +29,11 @@ The file is `.minecraft/config/oreheightindicator.json`. Mod Menu and Cloth Conf
 - `animateReorder`: animate ranking changes
 - `uiScale`: scale from `0.5` to `3.0`
 - `minimumPercent`: minimum height relevance, despite the legacy field name
+- `hiddenOres`: detected ore IDs that should not appear in the HUD
 - `maxEntries`: maximum number of ore rows
 - `updateIntervalTicks`: interval for height and biome checks
+
+The `Displayed ores` category lists ores detected from the active worldgen. Each ore can be shown or hidden without changing the datapack or modpack. Hidden selections remain available after a restart.
 
 Press `H` to toggle the HUD.
 

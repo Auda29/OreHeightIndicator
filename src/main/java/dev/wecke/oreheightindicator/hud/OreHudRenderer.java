@@ -39,9 +39,7 @@ public final class OreHudRenderer {
     }
 
     public void update(MinecraftClient client, int y) {
-        if (!probabilityService.updateIfNeeded(client, y)) {
-            return;
-        }
+        probabilityService.updateIfNeeded(client, y);
         cachedY = y;
         rebuildLines();
     }
@@ -119,12 +117,12 @@ public final class OreHudRenderer {
         List<AnimatedOreRow> nextRows = new ArrayList<>();
         int count = 0;
         for (OreProbabilityService.OreChance chance : probabilityService.sortedChances()) {
+            float threshold = config.minimumPercent != null ? config.minimumPercent : 0.5f;
+            if (!config.isOreVisible(chance.oreKey()) || chance.relevance() < threshold) {
+                continue;
+            }
             if (count >= config.maxEntries) {
                 break;
-            }
-            float threshold = config.minimumPercent != null ? config.minimumPercent : 0.5f;
-            if (chance.relevance() < threshold) {
-                continue;
             }
 
             String oreName = chance.oreName();

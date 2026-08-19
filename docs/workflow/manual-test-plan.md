@@ -15,6 +15,8 @@
 3. Confirm that each row has one icon, one name and one bar. No percentages should appear.
 4. Press `H` twice and confirm immediate hide and show behavior.
 5. Change `maxEntries`, `minimumPercent`, scale, icons, position and animation in Mod Menu. Confirm that each setting still applies.
+6. Disable copper in `Displayed ores` and confirm that it disappears without changing height.
+7. Reopen the settings and restart the game. Confirm that copper stays disabled and can be enabled again.
 
 ## Worldgen checks
 
@@ -31,6 +33,7 @@
 2. Enter that biome and confirm that the new ore appears with its translated name and block icon.
 3. Change its height placement, reload or reopen the world and confirm that its bar changes at the affected heights.
 4. Remove the feature from the biome and confirm that the row disappears.
+5. Confirm that the detected modded ore appears in `Displayed ores` and can be hidden independently.
 
 ## Logs and performance
 

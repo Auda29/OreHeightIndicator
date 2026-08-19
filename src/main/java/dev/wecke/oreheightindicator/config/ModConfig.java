@@ -10,10 +10,12 @@ import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 public final class ModConfig {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final Path CONFIG_PATH = FabricLoader.getInstance().getConfigDir().resolve("oreheightindicator.json");
     private static ModConfig current;
 
     public boolean hudEnabled = true;
@@ -25,16 +27,41 @@ public final class ModConfig {
     public Boolean animateReorder = true;
     public Float uiScale = 1.0f;
     public Float minimumPercent = 10.0f;
+    public List<String> hiddenOres = new ArrayList<>();
+
+    public boolean isOreVisible(String oreKey) {
+        String normalized = normalizeOreKey(oreKey);
+        return normalized == null || !hiddenOres.contains(normalized);
+    }
+
+    public void setOreVisible(String oreKey, boolean visible) {
+        String normalized = normalizeOreKey(oreKey);
+        if (normalized == null) {
+            return;
+        }
+
+        if (visible) {
+            hiddenOres.removeIf(normalized::equals);
+        } else if (!hiddenOres.contains(normalized)) {
+            hiddenOres.add(normalized);
+            hiddenOres.sort(String::compareTo);
+        }
+    }
+
+    public List<String> hiddenOreKeys() {
+        return List.copyOf(hiddenOres);
+    }
 
     public static ModConfig load() {
-        if (!Files.exists(CONFIG_PATH)) {
+        Path configPath = configPath();
+        if (!Files.exists(configPath)) {
             ModConfig config = new ModConfig();
             config.save();
             current = config;
             return config;
         }
 
-        try (Reader reader = Files.newBufferedReader(CONFIG_PATH)) {
+        try (Reader reader = Files.newBufferedReader(configPath)) {
             ModConfig config = GSON.fromJson(reader, ModConfig.class);
             if (config == null) {
                 config = new ModConfig();
@@ -59,9 +86,10 @@ public final class ModConfig {
 
     public void save() {
         sanitize();
+        Path configPath = configPath();
         try {
-            Files.createDirectories(CONFIG_PATH.getParent());
-            try (Writer writer = Files.newBufferedWriter(CONFIG_PATH)) {
+            Files.createDirectories(configPath.getParent());
+            try (Writer writer = Files.newBufferedWriter(configPath)) {
                 GSON.toJson(this, writer);
             }
         } catch (IOException ignored) {
@@ -87,5 +115,26 @@ public final class ModConfig {
             minimumPercent = 10.0f;
         }
         minimumPercent = Math.max(0.0f, Math.min(100.0f, minimumPercent));
+        if (hiddenOres == null) {
+            hiddenOres = new ArrayList<>();
+        }
+        hiddenOres = hiddenOres.stream()
+            .map(ModConfig::normalizeOreKey)
+            .filter(key -> key != null)
+            .distinct()
+            .sorted()
+            .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
+    }
+
+    private static String normalizeOreKey(String oreKey) {
+        if (oreKey == null) {
+            return null;
+        }
+        String normalized = oreKey.trim().toLowerCase(Locale.ROOT);
+        return normalized.isEmpty() ? null : normalized;
+    }
+
+    private static Path configPath() {
+        return FabricLoader.getInstance().getConfigDir().resolve("oreheightindicator.json");
     }
 }

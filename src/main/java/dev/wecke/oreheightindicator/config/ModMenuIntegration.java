@@ -2,10 +2,15 @@ package dev.wecke.oreheightindicator.config;
 
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
+import dev.wecke.oreheightindicator.data.OreDisplayCatalog;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 import net.minecraft.text.Text;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 public final class ModMenuIntegration implements ModMenuApi {
     @Override
@@ -19,6 +24,7 @@ public final class ModMenuIntegration implements ModMenuApi {
 
             ConfigEntryBuilder entries = builder.entryBuilder();
             ConfigCategory hud = builder.getOrCreateCategory(Text.literal("HUD"));
+            ConfigCategory displayedOres = builder.getOrCreateCategory(Text.literal("Displayed ores"));
             ConfigCategory data = builder.getOrCreateCategory(Text.literal("Data & Performance"));
 
             hud.addEntry(
@@ -101,8 +107,43 @@ public final class ModMenuIntegration implements ModMenuApi {
                     .build()
             );
 
+            displayedOres.setDescription(new Text[] {
+                Text.literal("Choose which detected ores may appear in the HUD.")
+            });
+            List<OreDisplayCatalog.OreOption> oreOptions = new ArrayList<>(
+                OreDisplayCatalog.knownOresIncluding(config.hiddenOreKeys())
+            );
+            oreOptions.sort(Comparator.comparing(
+                option -> oreLabel(option).getString(),
+                String.CASE_INSENSITIVE_ORDER
+            ));
+
+            if (oreOptions.isEmpty()) {
+                displayedOres.addEntry(
+                    entries.startTextDescription(
+                        Text.literal("Enter a world once to detect its ores.")
+                    ).build()
+                );
+            } else {
+                for (OreDisplayCatalog.OreOption option : oreOptions) {
+                    displayedOres.addEntry(
+                        entries.startBooleanToggle(oreLabel(option), config.isOreVisible(option.key()))
+                            .setDefaultValue(true)
+                            .setTooltip(Text.literal(option.key()))
+                            .setSaveConsumer(visible -> config.setOreVisible(option.key(), visible))
+                            .build()
+                    );
+                }
+            }
+
             builder.setSavingRunnable(config::save);
             return builder.build();
         };
+    }
+
+    private static Text oreLabel(OreDisplayCatalog.OreOption option) {
+        return option.translationKey().isBlank()
+            ? Text.literal(option.fallbackName())
+            : Text.translatable(option.translationKey());
     }
 }
