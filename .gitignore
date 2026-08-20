@@ -1,7 +1,9 @@
 .gradle/
 build/
+bin/
 run/
 logs/
 out/
 *.iml
 .idea/
+.claude/settings.local.json
