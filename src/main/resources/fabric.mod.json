@@ -7,6 +7,7 @@
   "authors": [
     "Auda29"
   ],
+  "icon": "assets/oreheightindicator/icon.png",
   "environment": "client",
   "entrypoints": {
     "client": [
