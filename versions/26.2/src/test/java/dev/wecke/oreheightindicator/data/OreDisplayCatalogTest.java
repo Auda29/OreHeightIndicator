@@ -8,6 +8,29 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class OreDisplayCatalogTest {
     @Test
+    void includesAllVanillaOresBeforeWorldDetection() {
+        List<OreDisplayCatalog.OreOption> options = OreDisplayCatalog.knownOresIncluding(List.of());
+
+        for (String key : List.of(
+            "minecraft:coal_ore",
+            "minecraft:copper_ore",
+            "minecraft:iron_ore",
+            "minecraft:gold_ore",
+            "minecraft:redstone_ore",
+            "minecraft:lapis_ore",
+            "minecraft:diamond_ore",
+            "minecraft:emerald_ore",
+            "minecraft:nether_gold_ore",
+            "minecraft:nether_quartz_ore",
+            "minecraft:ancient_debris"
+        )) {
+            option(options, key);
+        }
+
+        assertEquals("block.minecraft.diamond_ore", option(options, "minecraft:diamond_ore").translationKey());
+    }
+
+    @Test
     void combinesDetectedOresWithPreviouslyHiddenKeys() {
         OreDisplayCatalog.remember(
             "examplemod:tin_ore",

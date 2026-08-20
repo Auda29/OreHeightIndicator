@@ -49,7 +49,7 @@ public final class OreHeightIndicatorClient implements ClientModInitializer {
             config.save();
         }
 
-        if (!config.hudEnabled || client.player == null) {
+        if (client.player == null) {
             return;
         }
 

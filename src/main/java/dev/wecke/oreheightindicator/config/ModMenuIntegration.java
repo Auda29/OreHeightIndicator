@@ -116,7 +116,7 @@ public final class ModMenuIntegration implements ModMenuApi {
             );
 
             displayedOres.setDescription(new Text[] {
-                Text.literal("Choose which detected ores may appear in the HUD.")
+                Text.literal("Choose which vanilla and detected modded ores may appear in the HUD.")
             });
             List<OreDisplayCatalog.OreOption> oreOptions = new ArrayList<>(
                 OreDisplayCatalog.knownOresIncluding(config.hiddenOreKeys())
