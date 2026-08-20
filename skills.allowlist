@@ -1,7 +1,0 @@
-# skills.allowlist
-#
-# This file governs which external skill sources are permitted in this project.
-
-allowed_sources:
-
-blocked_sources:
