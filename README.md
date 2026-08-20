@@ -2,6 +2,8 @@
 
 Client-side Fabric mod for Minecraft `1.21.11` and `26.2`. The HUD shows the current Y level and a short, biome-aware list of ores that fit that height.
 
+For installation help and configuration screenshots, see the [user guide](docs/user-guide.md).
+
 Each Minecraft generation has its own JAR. Use the filename that matches your game:
 
 - `ore-height-indicator-<version>+mc1.21.11.jar`
