@@ -1,5 +1,6 @@
 plugins {
     id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
+    id 'com.modrinth.minotaur' version '2.9.0'
     id 'maven-publish'
 }
 
@@ -63,6 +64,54 @@ tasks.named("test", Test) {
 
 tasks.withType(AbstractArchiveTask).configureEach {
     archiveVersion = "${project.version}+mc1.21.11"
+}
+
+// Minotaur publishes the immutable JARs downloaded from a GitHub Release in CI.
+// The defaults keep `./gradlew modrinth` useful for local development without
+// putting credentials or a project ID in source control.
+def modrinthProperty = { String name, String fallback ->
+    def value = findProperty(name)
+    return value == null ? fallback : value.toString()
+}
+def modrinthUploadPath = findProperty('modrinth_upload_file')
+def modrinthAdditionalPath = findProperty('modrinth_additional_file')
+def modrinthChangelogPath = findProperty('modrinth_changelog_file')
+def modrinthGameVersions = modrinthProperty('modrinth_game_versions', project.minecraft_version)
+    .split(',')
+    .collect { it.trim() }
+    .findAll { !it.isEmpty() }
+
+modrinth {
+    token = System.getenv('MODRINTH_TOKEN')
+    projectId = modrinthProperty('modrinth_project_id', '')
+    versionNumber = modrinthProperty('modrinth_version_number', project.version.toString())
+    versionName = modrinthProperty('modrinth_version_name', "Ore Height Indicator ${project.version}")
+    versionType = modrinthProperty('modrinth_version_type', 'release')
+    changelog = modrinthChangelogPath
+        ? file(modrinthChangelogPath).getText('UTF-8')
+        : 'No changelog was specified.'
+    uploadFile = modrinthUploadPath ? file(modrinthUploadPath) : tasks.remapJar
+    additionalFiles = modrinthAdditionalPath ? [file(modrinthAdditionalPath)] : []
+    gameVersions = modrinthGameVersions
+    loaders = ['fabric']
+    autoAddDependsOn = false
+    debugMode = Boolean.parseBoolean(modrinthProperty('modrinth_debug', 'false'))
+
+    dependencies {
+        required.project 'fabric-api'
+        optional.project 'modmenu'
+        optional.project 'cloth-config'
+    }
+}
+
+// Minotaur normally runs `assemble` before every upload. CI passes immutable
+// GitHub Release assets explicitly, so clear that default only for this path.
+afterEvaluate {
+    if (modrinthUploadPath) {
+        tasks.named('modrinth') {
+            setDependsOn([])
+        }
+    }
 }
 
 publishing {

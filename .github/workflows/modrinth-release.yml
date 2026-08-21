@@ -1,0 +1,214 @@
+name: Publish Modrinth
+
+on:
+  workflow_run:
+    workflows:
+      - Release
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing GitHub release tag to upload. Do not reuse a tag already published on Modrinth.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: modrinth-${{ github.repository }}-${{ github.event.workflow_run.id || inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish Modrinth release
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the released source
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.event.workflow_run.head_sha }}
+
+      - name: Resolve Modrinth release metadata
+        id: release_metadata
+        shell: bash
+        env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          MANUAL_TAG: ${{ inputs.tag }}
+          TRIGGER_EVENT: ${{ github.event_name }}
+          WORKFLOW_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+
+          project_version="$(awk -F= '$1 == "mod_version" { print $2 }' gradle.properties | tr -d '\r')"
+          archive_name="$(awk -F= '$1 == "archives_base_name" { print $2 }' gradle.properties | tr -d '\r')"
+          minecraft_1_21_11="$(awk -F= '$1 == "minecraft_version" { print $2 }' gradle.properties | tr -d '\r')"
+          minecraft_26_2="$(awk -F= '$1 == "minecraft_version" { print $2 }' versions/26.2/gradle.properties | tr -d '\r')"
+
+          if [[ -z "${project_version}" || -z "${archive_name}" || -z "${minecraft_1_21_11}" || -z "${minecraft_26_2}" ]]; then
+            echo "::error::The mod version, archive name and both Minecraft versions must be set."
+            exit 1
+          fi
+
+          expected_tag="v${project_version}"
+          release_tag="${MANUAL_TAG:-${expected_tag}}"
+          should_publish="true"
+
+          if [[ "${release_tag}" != "${expected_tag}" ]]; then
+            echo "::error file=gradle.properties::Tag ${release_tag} does not match mod_version ${project_version}. Expected ${expected_tag}."
+            exit 1
+          fi
+
+          if [[ "${TRIGGER_EVENT}" == "workflow_run" ]]; then
+            tagged_commit="$(gh api "repos/${GH_REPO}/commits/${expected_tag}" --jq '.sha')"
+
+            if [[ "${tagged_commit}" != "${WORKFLOW_HEAD_SHA}" ]]; then
+              should_publish="false"
+              echo "Tag ${expected_tag} does not point to this Release workflow commit. No Modrinth upload is needed."
+            fi
+          fi
+
+          normalized_version="${project_version,,}"
+          if [[ "${normalized_version}" == *alpha* ]]; then
+            release_type="alpha"
+          elif [[ "${normalized_version}" == *beta* || "${normalized_version}" == *rc* || "${normalized_version}" == *pre* || "${normalized_version}" == *-* ]]; then
+            release_type="beta"
+          else
+            release_type="release"
+          fi
+
+          {
+            echo "version=${project_version}"
+            echo "minecraft_1_21_11=${minecraft_1_21_11}"
+            echo "minecraft_26_2=${minecraft_26_2}"
+            echo "tag=${release_tag}"
+            echo "jar_1_21_11_name=${archive_name}-${project_version}+mc1.21.11.jar"
+            echo "jar_26_2_name=${archive_name}-${project_version}+mc26.2.jar"
+            echo "checksum_1_21_11_name=${archive_name}-${project_version}+mc1.21.11.jar.sha256"
+            echo "checksum_26_2_name=${archive_name}-${project_version}+mc26.2.jar.sha256"
+            echo "release_type=${release_type}"
+            echo "should_publish=${should_publish}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Download and verify GitHub release assets
+        if: steps.release_metadata.outputs.should_publish == 'true'
+        shell: bash
+        env:
+          CHECKSUM_1_21_11_NAME: ${{ steps.release_metadata.outputs.checksum_1_21_11_name }}
+          CHECKSUM_26_2_NAME: ${{ steps.release_metadata.outputs.checksum_26_2_name }}
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          JAR_1_21_11_NAME: ${{ steps.release_metadata.outputs.jar_1_21_11_name }}
+          JAR_26_2_NAME: ${{ steps.release_metadata.outputs.jar_26_2_name }}
+          RELEASE_TAG: ${{ steps.release_metadata.outputs.tag }}
+        run: |
+          set -euo pipefail
+
+          mkdir -p dist
+          gh release download "${RELEASE_TAG}" \
+            --repo "${GH_REPO}" \
+            --pattern "${JAR_1_21_11_NAME}" \
+            --pattern "${CHECKSUM_1_21_11_NAME}" \
+            --pattern "${JAR_26_2_NAME}" \
+            --pattern "${CHECKSUM_26_2_NAME}" \
+            --dir dist
+
+          for asset_name in \
+            "${JAR_1_21_11_NAME}" "${CHECKSUM_1_21_11_NAME}" \
+            "${JAR_26_2_NAME}" "${CHECKSUM_26_2_NAME}"; do
+            if [[ ! -s "dist/${asset_name}" ]]; then
+              echo "::error::The GitHub release is missing ${asset_name}."
+              exit 1
+            fi
+          done
+
+          (
+            cd dist
+            sha256sum --check "${CHECKSUM_1_21_11_NAME}"
+            sha256sum --check "${CHECKSUM_26_2_NAME}"
+          )
+
+      - name: Read the GitHub release notes
+        if: steps.release_metadata.outputs.should_publish == 'true'
+        shell: bash
+        env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release_metadata.outputs.tag }}
+        run: |
+          set -euo pipefail
+
+          gh release view "${RELEASE_TAG}" \
+            --repo "${GH_REPO}" \
+            --json body \
+            --jq '.body' > dist/changelog.md
+
+          if [[ ! -s dist/changelog.md ]]; then
+            printf 'Release %s\n' "${RELEASE_TAG}" > dist/changelog.md
+          fi
+
+      - name: Set up Java 21 for Minotaur
+        if: steps.release_metadata.outputs.should_publish == 'true'
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle
+        if: steps.release_metadata.outputs.should_publish == 'true'
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: basic
+
+      - name: Upload verified release assets with Minotaur
+        if: steps.release_metadata.outputs.should_publish == 'true'
+        shell: bash
+        env:
+          JAR_1_21_11_NAME: ${{ steps.release_metadata.outputs.jar_1_21_11_name }}
+          JAR_26_2_NAME: ${{ steps.release_metadata.outputs.jar_26_2_name }}
+          MINECRAFT_1_21_11: ${{ steps.release_metadata.outputs.minecraft_1_21_11 }}
+          MINECRAFT_26_2: ${{ steps.release_metadata.outputs.minecraft_26_2 }}
+          MODRINTH_PROJECT_ID: ${{ vars.MODRINTH_PROJECT_ID }}
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+          PROJECT_VERSION: ${{ steps.release_metadata.outputs.version }}
+          RELEASE_TYPE: ${{ steps.release_metadata.outputs.release_type }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${MODRINTH_TOKEN}" ]]; then
+            echo "::error::MODRINTH_TOKEN is not configured as a GitHub Actions secret."
+            exit 1
+          fi
+
+          if [[ -z "${MODRINTH_PROJECT_ID}" ]]; then
+            echo "::error::MODRINTH_PROJECT_ID is not configured as a GitHub Actions variable."
+            exit 1
+          fi
+
+          chmod +x gradlew
+          ./gradlew --no-daemon modrinth \
+            -Pmodrinth_project_id="${MODRINTH_PROJECT_ID}" \
+            -Pmodrinth_upload_file="${GITHUB_WORKSPACE}/dist/${JAR_1_21_11_NAME}" \
+            -Pmodrinth_additional_file="${GITHUB_WORKSPACE}/dist/${JAR_26_2_NAME}" \
+            -Pmodrinth_changelog_file="${GITHUB_WORKSPACE}/dist/changelog.md" \
+            -Pmodrinth_game_versions="${MINECRAFT_1_21_11},${MINECRAFT_26_2}" \
+            -Pmodrinth_version_name="Ore Height Indicator ${PROJECT_VERSION}" \
+            -Pmodrinth_version_number="${PROJECT_VERSION}" \
+            -Pmodrinth_version_type="${RELEASE_TYPE}"
+
+          {
+            echo "## Modrinth release"
+            echo
+            echo "- Version: ${PROJECT_VERSION}"
+            echo "- Release type: ${RELEASE_TYPE}"
+            echo "- Minecraft versions: ${MINECRAFT_1_21_11}, ${MINECRAFT_26_2}"
+            echo "- Uploaded assets: ${JAR_1_21_11_NAME}, ${JAR_26_2_NAME}"
+          } >> "${GITHUB_STEP_SUMMARY}"

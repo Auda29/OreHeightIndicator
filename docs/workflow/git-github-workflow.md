@@ -86,3 +86,38 @@ For every new version, the GitHub release workflow builds and tests the mod firs
 Stable versions use the CurseForge `release` type. Versions containing `alpha` use `alpha`; other suffixed versions use `beta`. The workflow marks Fabric API as required and Mod Menu and Cloth Config as optional dependencies.
 
 The manual `workflow_dispatch` trigger can publish an existing GitHub release that is missing from CurseForge. Never run it for a tag that already has a CurseForge file.
+
+## Modrinth release flow
+
+Modrinth releases are published by `.github/workflows/modrinth-release.yml`. The workflow follows the same successful `Release` workflow trigger and tag-to-commit check as CurseForge. It does not rebuild the mod: it downloads the two production JARs and their SHA-256 files from the corresponding GitHub release, verifies both checksums, and uploads those immutable assets as one Modrinth version through the official Minotaur Gradle plugin.
+
+### One-time setup
+
+Create and have the Ore Height Indicator Modrinth project approved before the first automatic upload. Then configure these repository settings:
+
+- Actions variable `MODRINTH_PROJECT_ID`: the public Modrinth project ID or project slug.
+- Actions secret `MODRINTH_TOKEN`: a Modrinth personal access token with the `CREATE_VERSION` scope.
+
+For example, with GitHub CLI from the repository root:
+
+```bash
+gh variable set MODRINTH_PROJECT_ID --body "your-project-id-or-slug"
+gh secret set MODRINTH_TOKEN
+```
+
+The token is supplied only to Minotaur at workflow runtime. Do not add it to `gradle.properties`, `.env`, the repository, or release notes.
+
+### Automatic publishing
+
+For every new GitHub release, after the GitHub release workflow succeeds, the Modrinth workflow:
+
+1. Confirms that the release tag points to the commit just released.
+2. Downloads the Minecraft 1.21.11 and 26.2 JARs plus their SHA-256 files from GitHub Releases.
+3. Verifies both checksums before any upload.
+4. Reuses GitHub release notes as the Modrinth changelog.
+5. Publishes one Modrinth version with Fabric API marked required and Mod Menu and Cloth Config marked optional.
+6. Attaches the Minecraft 1.21.11 JAR as the primary file and the 26.2 JAR as an additional file, tagged for both Minecraft versions and Fabric.
+
+Stable versions publish as `release`; versions containing `alpha` publish as `alpha`; other suffixed versions publish as `beta`.
+
+The manual `workflow_dispatch` trigger can publish an existing GitHub release that is missing from Modrinth. Never run it for a tag that already has a Modrinth version.

@@ -72,7 +72,7 @@ Build the 26.2 JAR with Java 25:
 
 The JARs are written to `build/libs/` and `versions/26.2/build/libs/` respectively. The release workflow builds and publishes both.
 
-The automated [GitHub release](docs/workflow/git-github-workflow.md#github-release-flow) and [CurseForge release](docs/workflow/git-github-workflow.md#curseforge-release-flow) processes are documented in the workflow guide. The one-time CurseForge credential setup uses [`scripts/setup-curseforge.sh`](scripts/setup-curseforge.sh).
+The automated [GitHub release](docs/workflow/git-github-workflow.md#github-release-flow), [CurseForge release](docs/workflow/git-github-workflow.md#curseforge-release-flow), and [Modrinth release](docs/workflow/git-github-workflow.md#modrinth-release-flow) processes are documented in the workflow guide. The one-time CurseForge credential setup uses [`scripts/setup-curseforge.sh`](scripts/setup-curseforge.sh); Modrinth requires the repository secret `MODRINTH_TOKEN` and variable `MODRINTH_PROJECT_ID`.
 
 ## Stack
 
