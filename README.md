@@ -74,6 +74,10 @@ The JARs are written to `build/libs/` and `versions/26.2/build/libs/` respective
 
 The automated [GitHub release](docs/workflow/git-github-workflow.md#github-release-flow), [CurseForge release](docs/workflow/git-github-workflow.md#curseforge-release-flow), and [Modrinth release](docs/workflow/git-github-workflow.md#modrinth-release-flow) processes are documented in the workflow guide. The one-time CurseForge credential setup uses [`scripts/setup-curseforge.sh`](scripts/setup-curseforge.sh); Modrinth requires the repository secret `MODRINTH_TOKEN` and variable `MODRINTH_PROJECT_ID`.
 
+## License
+
+Ore Height Indicator is distributed under the [MIT License](LICENSE).
+
 ## Stack
 
 - Minecraft `1.21.11`: Fabric Loader `0.18.4`, Fabric API `0.141.3+1.21.11`, Java `21`
