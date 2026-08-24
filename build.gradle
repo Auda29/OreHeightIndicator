@@ -74,12 +74,19 @@ def modrinthProperty = { String name, String fallback ->
     return value == null ? fallback : value.toString()
 }
 def modrinthUploadPath = findProperty('modrinth_upload_file')
-def modrinthAdditionalPath = findProperty('modrinth_additional_file')
 def modrinthChangelogPath = findProperty('modrinth_changelog_file')
+def commaSeparatedProperty = { String name, String fallback ->
+    modrinthProperty(name, fallback)
+        .split(',')
+        .collect { it.trim() }
+        .findAll { !it.isEmpty() }
+}
+def modrinthAdditionalPaths = commaSeparatedProperty('modrinth_additional_files', '')
 def modrinthGameVersions = modrinthProperty('modrinth_game_versions', project.minecraft_version)
     .split(',')
     .collect { it.trim() }
     .findAll { !it.isEmpty() }
+def modrinthLoaders = commaSeparatedProperty('modrinth_loaders', 'fabric')
 
 modrinth {
     token = System.getenv('MODRINTH_TOKEN')
@@ -91,15 +98,17 @@ modrinth {
         ? file(modrinthChangelogPath).getText('UTF-8')
         : 'No changelog was specified.'
     uploadFile = modrinthUploadPath ? file(modrinthUploadPath) : tasks.remapJar
-    additionalFiles = modrinthAdditionalPath ? [file(modrinthAdditionalPath)] : []
+    additionalFiles = modrinthAdditionalPaths.collect { file(it) }
     gameVersions = modrinthGameVersions
-    loaders = ['fabric']
+    loaders = modrinthLoaders
     autoAddDependsOn = false
     debugMode = Boolean.parseBoolean(modrinthProperty('modrinth_debug', 'false'))
 
     dependencies {
-        required.project 'fabric-api'
-        optional.project 'modmenu'
+        if (modrinthLoaders.contains('fabric')) {
+            required.project 'fabric-api'
+            optional.project 'modmenu'
+        }
         optional.project 'cloth-config'
     }
 }

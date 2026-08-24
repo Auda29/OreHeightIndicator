@@ -50,11 +50,20 @@ jobs:
 
           project_version="$(awk -F= '$1 == "mod_version" { print $2 }' gradle.properties | tr -d '\r')"
           archive_name="$(awk -F= '$1 == "archives_base_name" { print $2 }' gradle.properties | tr -d '\r')"
+          minecraft_1_21_1_fabric="$(awk -F= '$1 == "minecraft_version" { print $2 }' versions/1.21.1-fabric/gradle.properties | tr -d '\r')"
+          minecraft_1_21_1_neoforge="$(awk -F= '$1 == "minecraft_version" { print $2 }' versions/1.21.1-neoforge/gradle.properties | tr -d '\r')"
           minecraft_1_21_11="$(awk -F= '$1 == "minecraft_version" { print $2 }' gradle.properties | tr -d '\r')"
           minecraft_26_2="$(awk -F= '$1 == "minecraft_version" { print $2 }' versions/26.2/gradle.properties | tr -d '\r')"
 
-          if [[ -z "${project_version}" || -z "${archive_name}" || -z "${minecraft_1_21_11}" || -z "${minecraft_26_2}" ]]; then
-            echo "::error::The mod version, archive name and both Minecraft versions must be set."
+          if [[ -z "${project_version}" || -z "${archive_name}" || \
+                -z "${minecraft_1_21_1_fabric}" || -z "${minecraft_1_21_1_neoforge}" || \
+                -z "${minecraft_1_21_11}" || -z "${minecraft_26_2}" ]]; then
+            echo "::error::The mod version, archive name and all Minecraft versions must be set."
+            exit 1
+          fi
+
+          if [[ "${minecraft_1_21_1_fabric}" != "${minecraft_1_21_1_neoforge}" ]]; then
+            echo "::error::The Fabric and NeoForge 1.21.1 targets must use the same Minecraft version."
             exit 1
           fi
 
@@ -87,13 +96,18 @@ jobs:
 
           {
             echo "version=${project_version}"
+            echo "minecraft_1_21_1=${minecraft_1_21_1_fabric}"
             echo "minecraft_1_21_11=${minecraft_1_21_11}"
             echo "minecraft_26_2=${minecraft_26_2}"
             echo "tag=${release_tag}"
-            echo "jar_1_21_11_name=${archive_name}-${project_version}+mc1.21.11.jar"
-            echo "jar_26_2_name=${archive_name}-${project_version}+mc26.2.jar"
-            echo "checksum_1_21_11_name=${archive_name}-${project_version}+mc1.21.11.jar.sha256"
-            echo "checksum_26_2_name=${archive_name}-${project_version}+mc26.2.jar.sha256"
+            echo "jar_1_21_1_fabric_name=${archive_name}-${project_version}+mc1.21.1-fabric.jar"
+            echo "jar_1_21_1_neoforge_name=${archive_name}-${project_version}+mc1.21.1-neoforge.jar"
+            echo "jar_1_21_11_fabric_name=${archive_name}-${project_version}+mc1.21.11.jar"
+            echo "jar_26_2_fabric_name=${archive_name}-${project_version}+mc26.2.jar"
+            echo "checksum_1_21_1_fabric_name=${archive_name}-${project_version}+mc1.21.1-fabric.jar.sha256"
+            echo "checksum_1_21_1_neoforge_name=${archive_name}-${project_version}+mc1.21.1-neoforge.jar.sha256"
+            echo "checksum_1_21_11_fabric_name=${archive_name}-${project_version}+mc1.21.11.jar.sha256"
+            echo "checksum_26_2_fabric_name=${archive_name}-${project_version}+mc26.2.jar.sha256"
             echo "release_type=${release_type}"
             echo "should_publish=${should_publish}"
           } >> "${GITHUB_OUTPUT}"
@@ -102,12 +116,16 @@ jobs:
         if: steps.release_metadata.outputs.should_publish == 'true'
         shell: bash
         env:
-          CHECKSUM_1_21_11_NAME: ${{ steps.release_metadata.outputs.checksum_1_21_11_name }}
-          CHECKSUM_26_2_NAME: ${{ steps.release_metadata.outputs.checksum_26_2_name }}
+          CHECKSUM_1_21_1_FABRIC_NAME: ${{ steps.release_metadata.outputs.checksum_1_21_1_fabric_name }}
+          CHECKSUM_1_21_1_NEOFORGE_NAME: ${{ steps.release_metadata.outputs.checksum_1_21_1_neoforge_name }}
+          CHECKSUM_1_21_11_FABRIC_NAME: ${{ steps.release_metadata.outputs.checksum_1_21_11_fabric_name }}
+          CHECKSUM_26_2_FABRIC_NAME: ${{ steps.release_metadata.outputs.checksum_26_2_fabric_name }}
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
-          JAR_1_21_11_NAME: ${{ steps.release_metadata.outputs.jar_1_21_11_name }}
-          JAR_26_2_NAME: ${{ steps.release_metadata.outputs.jar_26_2_name }}
+          JAR_1_21_1_FABRIC_NAME: ${{ steps.release_metadata.outputs.jar_1_21_1_fabric_name }}
+          JAR_1_21_1_NEOFORGE_NAME: ${{ steps.release_metadata.outputs.jar_1_21_1_neoforge_name }}
+          JAR_1_21_11_FABRIC_NAME: ${{ steps.release_metadata.outputs.jar_1_21_11_fabric_name }}
+          JAR_26_2_FABRIC_NAME: ${{ steps.release_metadata.outputs.jar_26_2_fabric_name }}
           RELEASE_TAG: ${{ steps.release_metadata.outputs.tag }}
         run: |
           set -euo pipefail
@@ -115,15 +133,21 @@ jobs:
           mkdir -p dist
           gh release download "${RELEASE_TAG}" \
             --repo "${GH_REPO}" \
-            --pattern "${JAR_1_21_11_NAME}" \
-            --pattern "${CHECKSUM_1_21_11_NAME}" \
-            --pattern "${JAR_26_2_NAME}" \
-            --pattern "${CHECKSUM_26_2_NAME}" \
+            --pattern "${JAR_1_21_1_FABRIC_NAME}" \
+            --pattern "${CHECKSUM_1_21_1_FABRIC_NAME}" \
+            --pattern "${JAR_1_21_1_NEOFORGE_NAME}" \
+            --pattern "${CHECKSUM_1_21_1_NEOFORGE_NAME}" \
+            --pattern "${JAR_1_21_11_FABRIC_NAME}" \
+            --pattern "${CHECKSUM_1_21_11_FABRIC_NAME}" \
+            --pattern "${JAR_26_2_FABRIC_NAME}" \
+            --pattern "${CHECKSUM_26_2_FABRIC_NAME}" \
             --dir dist
 
           for asset_name in \
-            "${JAR_1_21_11_NAME}" "${CHECKSUM_1_21_11_NAME}" \
-            "${JAR_26_2_NAME}" "${CHECKSUM_26_2_NAME}"; do
+            "${JAR_1_21_1_FABRIC_NAME}" "${CHECKSUM_1_21_1_FABRIC_NAME}" \
+            "${JAR_1_21_1_NEOFORGE_NAME}" "${CHECKSUM_1_21_1_NEOFORGE_NAME}" \
+            "${JAR_1_21_11_FABRIC_NAME}" "${CHECKSUM_1_21_11_FABRIC_NAME}" \
+            "${JAR_26_2_FABRIC_NAME}" "${CHECKSUM_26_2_FABRIC_NAME}"; do
             if [[ ! -s "dist/${asset_name}" ]]; then
               echo "::error::The GitHub release is missing ${asset_name}."
               exit 1
@@ -132,8 +156,10 @@ jobs:
 
           (
             cd dist
-            sha256sum --check "${CHECKSUM_1_21_11_NAME}"
-            sha256sum --check "${CHECKSUM_26_2_NAME}"
+            sha256sum --check "${CHECKSUM_1_21_1_FABRIC_NAME}"
+            sha256sum --check "${CHECKSUM_1_21_1_NEOFORGE_NAME}"
+            sha256sum --check "${CHECKSUM_1_21_11_FABRIC_NAME}"
+            sha256sum --check "${CHECKSUM_26_2_FABRIC_NAME}"
           )
 
       - name: Read the GitHub release notes
@@ -172,8 +198,11 @@ jobs:
         if: steps.release_metadata.outputs.should_publish == 'true'
         shell: bash
         env:
-          JAR_1_21_11_NAME: ${{ steps.release_metadata.outputs.jar_1_21_11_name }}
-          JAR_26_2_NAME: ${{ steps.release_metadata.outputs.jar_26_2_name }}
+          JAR_1_21_1_FABRIC_NAME: ${{ steps.release_metadata.outputs.jar_1_21_1_fabric_name }}
+          JAR_1_21_1_NEOFORGE_NAME: ${{ steps.release_metadata.outputs.jar_1_21_1_neoforge_name }}
+          JAR_1_21_11_FABRIC_NAME: ${{ steps.release_metadata.outputs.jar_1_21_11_fabric_name }}
+          JAR_26_2_FABRIC_NAME: ${{ steps.release_metadata.outputs.jar_26_2_fabric_name }}
+          MINECRAFT_1_21_1: ${{ steps.release_metadata.outputs.minecraft_1_21_1 }}
           MINECRAFT_1_21_11: ${{ steps.release_metadata.outputs.minecraft_1_21_11 }}
           MINECRAFT_26_2: ${{ steps.release_metadata.outputs.minecraft_26_2 }}
           MODRINTH_PROJECT_ID: ${{ vars.MODRINTH_PROJECT_ID }}
@@ -194,21 +223,35 @@ jobs:
           fi
 
           chmod +x gradlew
-          ./gradlew --no-daemon modrinth \
-            -Pmodrinth_project_id="${MODRINTH_PROJECT_ID}" \
-            -Pmodrinth_upload_file="${GITHUB_WORKSPACE}/dist/${JAR_1_21_11_NAME}" \
-            -Pmodrinth_additional_file="${GITHUB_WORKSPACE}/dist/${JAR_26_2_NAME}" \
-            -Pmodrinth_changelog_file="${GITHUB_WORKSPACE}/dist/changelog.md" \
-            -Pmodrinth_game_versions="${MINECRAFT_1_21_11},${MINECRAFT_26_2}" \
-            -Pmodrinth_version_name="Ore Height Indicator ${PROJECT_VERSION}" \
-            -Pmodrinth_version_number="${PROJECT_VERSION}" \
-            -Pmodrinth_version_type="${RELEASE_TYPE}"
+
+          upload_version() {
+            local jar_name="$1"
+            local minecraft_version="$2"
+            local loader="$3"
+            local loader_slug="${loader,,}"
+
+            ./gradlew --no-daemon modrinth \
+              -Pmodrinth_project_id="${MODRINTH_PROJECT_ID}" \
+              -Pmodrinth_upload_file="${GITHUB_WORKSPACE}/dist/${jar_name}" \
+              -Pmodrinth_changelog_file="${GITHUB_WORKSPACE}/dist/changelog.md" \
+              -Pmodrinth_game_versions="${minecraft_version}" \
+              -Pmodrinth_loaders="${loader_slug}" \
+              -Pmodrinth_version_name="Ore Height Indicator ${PROJECT_VERSION} for Minecraft ${minecraft_version} (${loader})" \
+              -Pmodrinth_version_number="${PROJECT_VERSION}+${loader_slug}-${minecraft_version}" \
+              -Pmodrinth_version_type="${RELEASE_TYPE}"
+          }
+
+          upload_version "${JAR_1_21_1_FABRIC_NAME}" "${MINECRAFT_1_21_1}" "Fabric"
+          upload_version "${JAR_1_21_1_NEOFORGE_NAME}" "${MINECRAFT_1_21_1}" "NeoForge"
+          upload_version "${JAR_1_21_11_FABRIC_NAME}" "${MINECRAFT_1_21_11}" "Fabric"
+          upload_version "${JAR_26_2_FABRIC_NAME}" "${MINECRAFT_26_2}" "Fabric"
 
           {
             echo "## Modrinth release"
             echo
             echo "- Version: ${PROJECT_VERSION}"
             echo "- Release type: ${RELEASE_TYPE}"
-            echo "- Minecraft versions: ${MINECRAFT_1_21_11}, ${MINECRAFT_26_2}"
-            echo "- Uploaded assets: ${JAR_1_21_11_NAME}, ${JAR_26_2_NAME}"
+            echo "- Minecraft ${MINECRAFT_1_21_1}: Fabric and NeoForge"
+            echo "- Minecraft ${MINECRAFT_1_21_11}: Fabric"
+            echo "- Minecraft ${MINECRAFT_26_2}: Fabric"
           } >> "${GITHUB_STEP_SUMMARY}"

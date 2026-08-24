@@ -2,9 +2,11 @@
 
 ## Setup
 
-- Minecraft `1.21.11`
-- Fabric Loader and Fabric API
-- Mod Menu and Cloth Config for settings checks
+- Minecraft `1.21.1` with Fabric Loader and Fabric API
+- Minecraft `1.21.1` with NeoForge
+- Minecraft `1.21.11` and `26.2` with Fabric Loader and Fabric API
+- Mod Menu and Cloth Config for Fabric settings checks
+- Cloth Config for NeoForge settings checks
 - One vanilla world
 - One world with a small ore datapack or modpack
 
@@ -14,9 +16,10 @@
 2. Compare the HUD Y value with F3.
 3. Confirm that each row has one icon, one name and one bar. No percentages should appear.
 4. Press `H` twice and confirm immediate hide and show behavior.
-5. Change `maxEntries`, `minimumPercent`, scale, icons, position and animation in Mod Menu. Confirm that each setting still applies.
+5. Change `maxEntries`, `minimumPercent`, scale, icons, position and animation in the settings screen. Confirm that each setting still applies.
 6. Disable copper in `Displayed ores` and confirm that it disappears without changing height.
 7. Reopen the settings and restart the game. Confirm that copper stays disabled and can be enabled again.
+8. Repeat the core HUD, key binding and settings checks on both Minecraft 1.21.1 loaders.
 
 ## Worldgen checks
 

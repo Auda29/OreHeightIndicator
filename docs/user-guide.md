@@ -2,24 +2,33 @@
 
 This guide explains the mod step by step. You do not need commands, cheats, or a server installation.
 
-> Screenshots use Minecraft 1.21.11. The mod works the same way in Minecraft 26.2.
+> Screenshots use the Fabric build for Minecraft 1.21.11. The HUD works the same way in every supported build.
 
 ## 1. Install the mod
 
-You need three things:
+First choose the loader used by your Minecraft profile. Do not mix Fabric and NeoForge files.
+
+For Fabric, install:
 
 1. **Fabric Loader** for your Minecraft version
 2. **Fabric API**
-3. The Ore Height Indicator file that matches your Minecraft version
+3. The matching Fabric Ore Height Indicator file
+
+For NeoForge, install:
+
+1. **NeoForge** for Minecraft 1.21.1
+2. The NeoForge Ore Height Indicator file
 
 Choose the file carefully:
 
-| Your game | File name ends with | Java |
-| --- | --- | --- |
-| Minecraft 1.21.11 | `+mc1.21.11.jar` | Java 21 |
-| Minecraft 26.2 | `+mc26.2.jar` | Java 25 |
+| Your game | Loader | File name ends with | Java |
+| --- | --- | --- | --- |
+| Minecraft 1.21.1 | Fabric | `+mc1.21.1-fabric.jar` | Java 21 |
+| Minecraft 1.21.1 | NeoForge | `+mc1.21.1-neoforge.jar` | Java 21 |
+| Minecraft 1.21.11 | Fabric | `+mc1.21.11.jar` | Java 21 |
+| Minecraft 26.2 | Fabric | `+mc26.2.jar` | Java 25 |
 
-Put Fabric API and Ore Height Indicator in your `.minecraft/mods` folder, then start the Fabric installation from the Minecraft Launcher.
+Put the required files in your `.minecraft/mods` folder, then start the matching Fabric or NeoForge installation from the Minecraft Launcher.
 
 You only need the mod on your own computer. It is a client-side mod, so a multiplayer server does not need to install it.
 
@@ -54,7 +63,7 @@ Do not add the percentages together. Percentages for different ores are not dire
 
 ## 4. Change the settings
 
-For an in-game settings screen, install both optional mods:
+For an in-game settings screen on Fabric, install both optional mods:
 
 - **Mod Menu**
 - **Cloth Config API**
@@ -62,6 +71,8 @@ For an in-game settings screen, install both optional mods:
 Then open:
 
 **Main Menu or Pause Menu → Mods → Ore Height Indicator → Configure**
+
+On NeoForge, install **Cloth Config API** and open the same mod from the NeoForge Mods screen. Mod Menu is not used on NeoForge.
 
 ![Ore Height Indicator selected in Mod Menu with the Configure button visible](assets/user-guide/02-open-settings.png)
 
@@ -112,13 +123,13 @@ On a multiplayer server, private server datapacks are not sent to your computer.
 1. Enter a world and wait a few seconds.
 2. Press `H` once.
 3. Check that you installed the correct JAR for your Minecraft version.
-4. Check that Fabric API is in the `mods` folder.
+4. On Fabric, check that Fabric API is in the `mods` folder. On NeoForge, check that the JAR name ends with `-neoforge.jar`.
 5. Open the settings and make sure **HUD Enabled** is on.
 6. Set **Minimum Suitability %** to `0` for a quick test.
 
 ### I cannot find the Configure button
 
-Install both **Mod Menu** and **Cloth Config API**. They are optional for the HUD, but both are required for the in-game settings screen.
+On Fabric, install both **Mod Menu** and **Cloth Config API**. On NeoForge, install **Cloth Config API**. These are optional for the HUD but required for the in-game settings screen.
 
 ### No ores are listed in the End
 

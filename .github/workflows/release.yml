@@ -65,8 +65,10 @@ jobs:
 
           {
             echo "version=${project_version}"
-            echo "jar_1_21_11_path=build/libs/${archive_name}-${project_version}+mc1.21.11.jar"
-            echo "jar_26_2_path=versions/26.2/build/libs/${archive_name}-${project_version}+mc26.2.jar"
+            echo "jar_1_21_1_fabric_path=versions/1.21.1-fabric/build/libs/${archive_name}-${project_version}+mc1.21.1-fabric.jar"
+            echo "jar_1_21_1_neoforge_path=versions/1.21.1-neoforge/build/libs/${archive_name}-${project_version}+mc1.21.1-neoforge.jar"
+            echo "jar_1_21_11_fabric_path=build/libs/${archive_name}-${project_version}+mc1.21.11.jar"
+            echo "jar_26_2_fabric_path=versions/26.2/build/libs/${archive_name}-${project_version}+mc26.2.jar"
             echo "tag=${expected_tag}"
             echo "should_release=${should_release}"
           } >> "${GITHUB_OUTPUT}"
@@ -91,6 +93,16 @@ jobs:
           chmod +x gradlew
           ./gradlew --no-daemon clean build
 
+      - name: Build and test Fabric for Minecraft 1.21.1
+        if: steps.release_metadata.outputs.should_release == 'true'
+        shell: bash
+        run: ./gradlew --no-daemon -p versions/1.21.1-fabric clean build
+
+      - name: Build and test NeoForge for Minecraft 1.21.1
+        if: steps.release_metadata.outputs.should_release == 'true'
+        shell: bash
+        run: ./gradlew --no-daemon -p versions/1.21.1-neoforge clean build
+
       - name: Set up Java 25
         if: steps.release_metadata.outputs.should_release == 'true'
         uses: actions/setup-java@v5
@@ -108,15 +120,26 @@ jobs:
         id: release_assets
         shell: bash
         env:
-          JAR_1_21_11_PATH: ${{ steps.release_metadata.outputs.jar_1_21_11_path }}
-          JAR_26_2_PATH: ${{ steps.release_metadata.outputs.jar_26_2_path }}
+          JAR_1_21_1_FABRIC_PATH: ${{ steps.release_metadata.outputs.jar_1_21_1_fabric_path }}
+          JAR_1_21_1_NEOFORGE_PATH: ${{ steps.release_metadata.outputs.jar_1_21_1_neoforge_path }}
+          JAR_1_21_11_FABRIC_PATH: ${{ steps.release_metadata.outputs.jar_1_21_11_fabric_path }}
+          JAR_26_2_FABRIC_PATH: ${{ steps.release_metadata.outputs.jar_26_2_fabric_path }}
         run: |
           set -euo pipefail
 
-          for jar_path in "${JAR_1_21_11_PATH}" "${JAR_26_2_PATH}"; do
+          for jar_path in \
+            "${JAR_1_21_1_FABRIC_PATH}" \
+            "${JAR_1_21_1_NEOFORGE_PATH}" \
+            "${JAR_1_21_11_FABRIC_PATH}" \
+            "${JAR_26_2_FABRIC_PATH}"; do
             if [[ ! -s "${jar_path}" ]]; then
               echo "::error::Expected release artifact was not created: ${jar_path}"
-              find build/libs versions/26.2/build/libs -maxdepth 1 -type f -print || true
+              find \
+                build/libs \
+                versions/1.21.1-fabric/build/libs \
+                versions/1.21.1-neoforge/build/libs \
+                versions/26.2/build/libs \
+                -maxdepth 1 -type f -print || true
               exit 1
             fi
 
@@ -126,8 +149,10 @@ jobs:
           done
 
           {
-            echo "checksum_1_21_11_path=${JAR_1_21_11_PATH}.sha256"
-            echo "checksum_26_2_path=${JAR_26_2_PATH}.sha256"
+            echo "checksum_1_21_1_fabric_path=${JAR_1_21_1_FABRIC_PATH}.sha256"
+            echo "checksum_1_21_1_neoforge_path=${JAR_1_21_1_NEOFORGE_PATH}.sha256"
+            echo "checksum_1_21_11_fabric_path=${JAR_1_21_11_FABRIC_PATH}.sha256"
+            echo "checksum_26_2_fabric_path=${JAR_26_2_FABRIC_PATH}.sha256"
           } >> "${GITHUB_OUTPUT}"
 
       - name: Create the release tag
@@ -157,12 +182,16 @@ jobs:
         if: steps.release_metadata.outputs.should_release == 'true'
         shell: bash
         env:
-          CHECKSUM_1_21_11_PATH: ${{ steps.release_assets.outputs.checksum_1_21_11_path }}
-          CHECKSUM_26_2_PATH: ${{ steps.release_assets.outputs.checksum_26_2_path }}
+          CHECKSUM_1_21_1_FABRIC_PATH: ${{ steps.release_assets.outputs.checksum_1_21_1_fabric_path }}
+          CHECKSUM_1_21_1_NEOFORGE_PATH: ${{ steps.release_assets.outputs.checksum_1_21_1_neoforge_path }}
+          CHECKSUM_1_21_11_FABRIC_PATH: ${{ steps.release_assets.outputs.checksum_1_21_11_fabric_path }}
+          CHECKSUM_26_2_FABRIC_PATH: ${{ steps.release_assets.outputs.checksum_26_2_fabric_path }}
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
-          JAR_1_21_11_PATH: ${{ steps.release_metadata.outputs.jar_1_21_11_path }}
-          JAR_26_2_PATH: ${{ steps.release_metadata.outputs.jar_26_2_path }}
+          JAR_1_21_1_FABRIC_PATH: ${{ steps.release_metadata.outputs.jar_1_21_1_fabric_path }}
+          JAR_1_21_1_NEOFORGE_PATH: ${{ steps.release_metadata.outputs.jar_1_21_1_neoforge_path }}
+          JAR_1_21_11_FABRIC_PATH: ${{ steps.release_metadata.outputs.jar_1_21_11_fabric_path }}
+          JAR_26_2_FABRIC_PATH: ${{ steps.release_metadata.outputs.jar_26_2_fabric_path }}
           PROJECT_VERSION: ${{ steps.release_metadata.outputs.version }}
           RELEASE_TAG: ${{ steps.release_metadata.outputs.tag }}
         run: |
@@ -170,18 +199,24 @@ jobs:
 
           if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
             gh release upload "${RELEASE_TAG}" \
-              "${JAR_1_21_11_PATH}" "${CHECKSUM_1_21_11_PATH}" \
-              "${JAR_26_2_PATH}" "${CHECKSUM_26_2_PATH}" \
+              "${JAR_1_21_1_FABRIC_PATH}" "${CHECKSUM_1_21_1_FABRIC_PATH}" \
+              "${JAR_1_21_1_NEOFORGE_PATH}" "${CHECKSUM_1_21_1_NEOFORGE_PATH}" \
+              "${JAR_1_21_11_FABRIC_PATH}" "${CHECKSUM_1_21_11_FABRIC_PATH}" \
+              "${JAR_26_2_FABRIC_PATH}" "${CHECKSUM_26_2_FABRIC_PATH}" \
               --clobber
             exit 0
           fi
 
           release_args=(
             "${RELEASE_TAG}"
-            "${JAR_1_21_11_PATH}"
-            "${CHECKSUM_1_21_11_PATH}"
-            "${JAR_26_2_PATH}"
-            "${CHECKSUM_26_2_PATH}"
+            "${JAR_1_21_1_FABRIC_PATH}"
+            "${CHECKSUM_1_21_1_FABRIC_PATH}"
+            "${JAR_1_21_1_NEOFORGE_PATH}"
+            "${CHECKSUM_1_21_1_NEOFORGE_PATH}"
+            "${JAR_1_21_11_FABRIC_PATH}"
+            "${CHECKSUM_1_21_11_FABRIC_PATH}"
+            "${JAR_26_2_FABRIC_PATH}"
+            "${CHECKSUM_26_2_FABRIC_PATH}"
             --verify-tag
             --generate-notes
             --title "Ore Height Indicator ${PROJECT_VERSION}"
