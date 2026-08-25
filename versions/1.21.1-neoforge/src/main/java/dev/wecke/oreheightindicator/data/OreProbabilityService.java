@@ -66,6 +66,12 @@ public final class OreProbabilityService {
             chancesByProviderIndex.get(i).setRelevance(relevance);
         }
         if (blockSampler != null) {
+            for (OreChance chance : chancesByProviderIndex) {
+                if (config != null && config.isMaterialTracked(chance.oreKey())) {
+                    float sampledRelevance = blockSampler.scoreAt(chance.oreKey(), y) * 100.0f;
+                    chance.setRelevance(combineTrackedRelevance(chance.relevance(), sampledRelevance));
+                }
+            }
             for (OreChance chance : sampledChances) {
                 float relevance = blockSampler.scoreAt(chance.oreKey(), y) * 100.0f;
                 chance.setRelevance(Math.max(0.0f, Math.min(100.0f, relevance)));
@@ -84,10 +90,7 @@ public final class OreProbabilityService {
 
     private void refreshTrackedBlocks(Minecraft client) {
         if (blockSampler == null || config == null) return;
-        Set<String> providerKeys = new HashSet<>();
-        for (int i = 0; i < provider.oreCount(); i++) providerKeys.add(provider.oreKey(i));
-        blockSampler.refresh(client, config.trackedMaterialKeys().stream()
-            .filter(key -> !providerKeys.contains(key)).toList());
+        blockSampler.refresh(client, config.trackedMaterialKeys());
     }
 
     private void rebuildOreList() {
@@ -126,6 +129,13 @@ public final class OreProbabilityService {
 
     public List<OreChance> sortedChances() {
         return sortedChances;
+    }
+
+    static float combineTrackedRelevance(float worldgenRelevance, float sampledRelevance) {
+        return Math.max(
+            Math.max(0.0f, Math.min(100.0f, worldgenRelevance)),
+            Math.max(0.0f, Math.min(100.0f, sampledRelevance))
+        );
     }
 
     public static final class OreChance {

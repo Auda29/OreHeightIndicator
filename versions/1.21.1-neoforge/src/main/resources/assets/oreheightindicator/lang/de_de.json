@@ -27,8 +27,9 @@
   "config.oreheightindicator.max_entries": "Maximale HUD-Einträge",
   "config.oreheightindicator.max_entries.tooltip": "Maximale Anzahl der Erz- und Materialzeilen im HUD.",
   "config.oreheightindicator.displayed_ores.description": "Unten stehen Standard-Erze und hinzugefügte Blöcke.",
-  "config.oreheightindicator.displayed_ores.instructions": "Suche über Block hinzufügen nach installierten Blöcken. Wähle einen Vorschlag, klicke auf Fertig und öffne diese Seite erneut.",
+  "config.oreheightindicator.displayed_ores.instructions": "Suche einen Block, wähle einen Vorschlag und klicke auf Hinzufügen.",
   "config.oreheightindicator.add_block": "Block hinzufügen",
-  "config.oreheightindicator.add_block.tooltip": "Nach Blockname oder Registry-ID suchen.",
+  "config.oreheightindicator.add_block.tooltip": "Nach Blockname oder Registry-ID suchen und dann auf Hinzufügen klicken.",
+  "config.oreheightindicator.add_block.action": "+ Hinzufügen",
   "config.oreheightindicator.no_blocks": "Noch keine registrierten Blöcke verfügbar."
 }

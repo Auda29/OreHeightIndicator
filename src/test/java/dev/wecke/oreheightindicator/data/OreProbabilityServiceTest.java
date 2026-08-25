@@ -83,6 +83,13 @@ class OreProbabilityServiceTest {
         assertEquals(10.0f, chances.get(2).relevance(), 1.0e-5f);
     }
 
+    @Test
+    void trackedBlockUsesObservedScoreWhenWorldgenScoreIsZero() {
+        assertEquals(72.0f, OreProbabilityService.combineTrackedRelevance(0.0f, 72.0f));
+        assertEquals(35.0f, OreProbabilityService.combineTrackedRelevance(35.0f, 0.0f));
+        assertEquals(100.0f, OreProbabilityService.combineTrackedRelevance(20.0f, 140.0f));
+    }
+
     private static List<String> oreNames(List<OreProbabilityService.OreChance> chances) {
         return chances.stream().map(OreProbabilityService.OreChance::oreName).toList();
     }

@@ -96,9 +96,9 @@ The settings are split into three sections:
 
 ### Displayed ores
 
-Turn an ore off if you never want it to appear in the HUD. The list initially contains standard ores only. To add another block, use `Add block` and type its translated name or registry ID. Choose a suggestion, press `Done` and reopen `Displayed ores`. The new block then has its own toggle. For example, search for `Andesite`, `Oak Log` or a block from an installed mod.
+Turn an ore off if you never want it to appear in the HUD. The list initially contains standard ores only. To add another block, use `Add block` and type its translated name or registry ID. Choose a suggestion and click `+ Add`. The new block appears immediately as its own toggle. For example, search for `Andesite`, `Oak Log` or a block from an installed mod.
 
-The add-block suggestions come from the live Minecraft block registry, so they are available before you enter a world without rendering every registered block as a settings row. A selected block first uses an active worldgen profile when one is readable. Otherwise, the mod samples nearby loaded blocks and compares the current height with the best height in that local sample. This fallback fixes materials such as andesite when they are missing from the current worldgen profile. The percentage is still relative suitability, not an absolute block frequency.
+The add-block suggestions come from the live Minecraft block registry, so they are available before you enter a world without rendering every registered block as a settings row. For a selected block, the mod combines the active worldgen profile with a sample of nearby loaded blocks. The stronger value wins at the current height. This fixes materials such as andesite when the readable profile is missing or incomplete. The percentage is still relative suitability, not an absolute block frequency.
 
 ![The Displayed ores category with individual ore toggles](assets/user-guide/04-displayed-ores.png)
 

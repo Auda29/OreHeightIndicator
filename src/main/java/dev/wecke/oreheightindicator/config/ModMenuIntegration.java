@@ -6,6 +6,12 @@ import dev.wecke.oreheightindicator.data.OreDisplayCatalog;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
+import me.shedaniel.clothconfig2.gui.entries.DropdownBoxEntry;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.Element;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.text.Text;
 
 import java.util.ArrayList;
@@ -15,9 +21,14 @@ import java.util.List;
 import java.util.Map;
 
 public final class ModMenuIntegration implements ModMenuApi {
+    private static final int ADD_BUTTON_WIDTH = 88;
+
     @Override
     public ConfigScreenFactory<?> getModConfigScreenFactory() {
-        return parent -> {
+        return parent -> buildScreen(parent, false);
+    }
+
+    private static Screen buildScreen(Screen parent, boolean focusDisplayedOres) {
             ModConfig config = ModConfig.getCurrent();
             OreDisplayCatalog.rememberRegisteredBlocks();
 
@@ -29,6 +40,9 @@ public final class ModMenuIntegration implements ModMenuApi {
             ConfigCategory hud = builder.getOrCreateCategory(Text.translatable("config.oreheightindicator.category.hud"));
             ConfigCategory displayedOres = builder.getOrCreateCategory(Text.translatable("config.oreheightindicator.category.displayed_ores"));
             ConfigCategory data = builder.getOrCreateCategory(Text.translatable("config.oreheightindicator.category.data"));
+            if (focusDisplayedOres) {
+                builder.setFallbackCategory(displayedOres);
+            }
 
             hud.addEntry(
                 entries.startBooleanToggle(Text.translatable("config.oreheightindicator.hud_enabled"), config.hudEnabled)
@@ -134,18 +148,17 @@ public final class ModMenuIntegration implements ModMenuApi {
                 searchableKeys.put(searchLabel(option), option.key());
             }
             if (!searchableKeys.isEmpty()) {
+                AddBlockTopCell topCell = new AddBlockTopCell(searchableKeys, key -> {
+                    config.setMaterialTracked(key, true);
+                    config.save();
+                    MinecraftClient.getInstance().setScreen(buildScreen(parent, true));
+                });
                 displayedOres.addEntry(
-                    entries.startStringDropdownMenu(Text.translatable("config.oreheightindicator.add_block"), "")
+                    entries.startDropdownMenu(Text.translatable("config.oreheightindicator.add_block"), topCell)
                         .setDefaultValue("")
                         .setSelections(searchableKeys.keySet())
                         .setSuggestionMode(true)
                         .setTooltip(Text.translatable("config.oreheightindicator.add_block.tooltip"))
-                        .setSaveConsumer(selected -> {
-                            String key = searchableKeys.get(selected);
-                            if (key != null) {
-                                config.setMaterialTracked(key, true);
-                            }
-                        })
                         .build()
                 );
             }
@@ -188,7 +201,6 @@ public final class ModMenuIntegration implements ModMenuApi {
 
             builder.setSavingRunnable(config::save);
             return builder.build();
-        };
     }
 
     private static Text oreLabel(OreDisplayCatalog.OreOption option) {
@@ -199,5 +211,60 @@ public final class ModMenuIntegration implements ModMenuApi {
 
     private static String searchLabel(OreDisplayCatalog.OreOption option) {
         return oreLabel(option).getString() + " [" + option.key() + "]";
+    }
+
+    private static final class AddBlockTopCell
+        extends DropdownBoxEntry.DefaultSelectionTopCellElement<String> {
+        private final Map<String, String> searchableKeys;
+        private final java.util.function.Consumer<String> addBlock;
+        private final ButtonWidget addButton;
+
+        private AddBlockTopCell(
+            Map<String, String> searchableKeys,
+            java.util.function.Consumer<String> addBlock
+        ) {
+            super("", value -> value, Text::literal);
+            this.searchableKeys = searchableKeys;
+            this.addBlock = addBlock;
+            this.addButton = ButtonWidget.builder(
+                Text.translatable("config.oreheightindicator.add_block.action"),
+                button -> addSelectedBlock()
+            ).dimensions(0, 0, ADD_BUTTON_WIDTH, 20).build();
+        }
+
+        private void addSelectedBlock() {
+            String key = searchableKeys.get(getValue());
+            if (key == null) {
+                return;
+            }
+            getParent().getConfigScreen().saveAll(false);
+            addBlock.accept(key);
+        }
+
+        @Override
+        public void render(
+            DrawContext context,
+            int x,
+            int y,
+            int width,
+            int height,
+            int mouseX,
+            int mouseY,
+            float delta
+        ) {
+            int fieldWidth = Math.max(40, width - ADD_BUTTON_WIDTH - 4);
+            super.render(context, x, y, fieldWidth, height, mouseX, mouseY, delta);
+            addButton.setX(x + width - ADD_BUTTON_WIDTH);
+            addButton.setY(y);
+            addButton.active = searchableKeys.containsKey(getValue());
+            addButton.render(context, mouseX, mouseY, delta);
+        }
+
+        @Override
+        public List<? extends Element> children() {
+            List<Element> children = new ArrayList<>(super.children());
+            children.add(addButton);
+            return children;
+        }
     }
 }

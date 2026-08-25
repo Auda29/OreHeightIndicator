@@ -27,8 +27,9 @@
   "config.oreheightindicator.max_entries": "Maximum HUD Entries",
   "config.oreheightindicator.max_entries.tooltip": "Maximum number of ore and material rows shown in the HUD.",
   "config.oreheightindicator.displayed_ores.description": "Standard ores and blocks you add are listed below.",
-  "config.oreheightindicator.displayed_ores.instructions": "Use Add block to search installed blocks. Choose a suggestion, press Done, then reopen this page.",
+  "config.oreheightindicator.displayed_ores.instructions": "Search for a block, choose a suggestion, then click Add.",
   "config.oreheightindicator.add_block": "Add block",
-  "config.oreheightindicator.add_block.tooltip": "Search by block name or registry ID.",
+  "config.oreheightindicator.add_block.tooltip": "Search by block name or registry ID, then click Add.",
+  "config.oreheightindicator.add_block.action": "+ Add",
   "config.oreheightindicator.no_blocks": "No registered blocks are available yet."
 }

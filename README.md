@@ -32,7 +32,7 @@ There is no provider switch and no downloaded Wiki table in the runtime path.
 
 In singleplayer, the mod reads the effective registry of the integrated server. This includes active vanilla features, datapacks and modded features that use Minecraft's standard ore configured-feature type.
 
-Every registered block is searchable in `Displayed ores`, including blocks added by mods. If a selected block such as andesite has no readable ore-style worldgen profile, the mod measures its relative height distribution in a sparse sample of nearby loaded blocks. This observed fallback works in singleplayer and multiplayer, respects the blocks the client actually received and refreshes after movement or 30 seconds. It may include blocks placed or removed by players.
+Every registered block is searchable in `Displayed ores`, including blocks added by mods. For selected blocks such as andesite, the mod combines the readable worldgen profile with a nearby loaded-block sample. This prevents an incomplete profile from forcing the HUD to 0%. The observed fallback works in singleplayer and multiplayer, respects the blocks the client actually received and refreshes after movement or 30 seconds. It may include blocks placed or removed by players.
 
 If no integrated server is available, the mod reads the worldgen JSON files from the installed Minecraft and mod classpath. This keeps the fallback tied to the installed game version. A remote server can still use private datapacks that it does not send to clients, so those changes cannot be detected by a client-only installation.
 
@@ -52,7 +52,7 @@ The file is `.minecraft/config/oreheightindicator.json`. Mod Menu and Cloth Conf
 - `maxEntries`: maximum number of HUD rows
 - `updateIntervalTicks`: interval for height and biome checks
 
-The `Displayed ores` category lists standard ores and the extra blocks you have added. Use the `Add block` field to search the live block registry by translated name or registry ID, choose a suggestion and save. The block then appears as its own toggle when you reopen the category. This keeps the settings screen small even with large modpacks. Ores remain enabled by default, while other blocks are opt-in. Selections remain available after a restart.
+The `Displayed ores` category lists standard ores and the extra blocks you have added. Use the `Add block` field to search the live block registry by translated name or registry ID, choose a suggestion and click `+ Add`. The mod saves the selection immediately and keeps this category open with the new block shown as its own toggle. This keeps the settings screen small even with large modpacks. Ores remain enabled by default, while other blocks are opt-in. Selections remain available after a restart.
 
 Press `H` to toggle the HUD.
 

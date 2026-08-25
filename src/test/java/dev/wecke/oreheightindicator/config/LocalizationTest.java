@@ -48,6 +48,7 @@ class LocalizationTest {
         "config.oreheightindicator.displayed_ores.instructions",
         "config.oreheightindicator.add_block",
         "config.oreheightindicator.add_block.tooltip",
+        "config.oreheightindicator.add_block.action",
         "config.oreheightindicator.no_blocks"
     );
 

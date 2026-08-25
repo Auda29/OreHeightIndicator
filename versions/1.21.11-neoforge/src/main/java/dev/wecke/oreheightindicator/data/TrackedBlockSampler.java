@@ -18,7 +18,7 @@ import net.minecraft.world.level.block.Block;
 
 public final class TrackedBlockSampler {
     private static final int SAMPLE_RADIUS = 32;
-    private static final int SAMPLE_STEP = 4;
+    private static final int SAMPLE_STEP = 2;
     private static final int CELL_SIZE = 32;
     private static final int SMOOTHING_RADIUS = 2;
     private static final long RESAMPLE_INTERVAL_NANOS = 30_000_000_000L;
