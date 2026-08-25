@@ -73,6 +73,32 @@ class OreDisplayCatalogTest {
         assertFalse(limestone.standardOre());
     }
 
+    @Test
+    void compactDisplayListContainsOnlyOresAndSelectedBlocks() {
+        OreDisplayCatalog.rememberRegisteredBlock("minecraft:andesite", "block.minecraft.andesite");
+        OreDisplayCatalog.rememberRegisteredBlock("minecraft:gravel", "block.minecraft.gravel");
+
+        List<OreDisplayCatalog.OreOption> displayed =
+            OreDisplayCatalog.displayedOptionsIncluding(List.of(" Minecraft:Andesite "));
+
+        assertTrue(hasOption(displayed, "minecraft:diamond_ore"));
+        assertTrue(hasOption(displayed, "minecraft:andesite"));
+        assertFalse(hasOption(displayed, "minecraft:gravel"));
+    }
+
+    @Test
+    void blockSearchExcludesOresAndAlreadySelectedBlocks() {
+        OreDisplayCatalog.rememberRegisteredBlock("minecraft:andesite", "block.minecraft.andesite");
+        OreDisplayCatalog.rememberRegisteredBlock("minecraft:gravel", "block.minecraft.gravel");
+
+        List<OreDisplayCatalog.OreOption> searchable =
+            OreDisplayCatalog.searchableBlocksExcluding(List.of("MINECRAFT:ANDESITE"));
+
+        assertFalse(hasOption(searchable, "minecraft:diamond_ore"));
+        assertFalse(hasOption(searchable, "minecraft:andesite"));
+        assertTrue(hasOption(searchable, "minecraft:gravel"));
+    }
+
     private static OreDisplayCatalog.OreOption option(
         List<OreDisplayCatalog.OreOption> options,
         String key
@@ -81,5 +107,9 @@ class OreDisplayCatalogTest {
             .filter(option -> option.key().equals(key))
             .findFirst()
             .orElseThrow();
+    }
+
+    private static boolean hasOption(List<OreDisplayCatalog.OreOption> options, String key) {
+        return options.stream().anyMatch(option -> option.key().equals(key));
     }
 }

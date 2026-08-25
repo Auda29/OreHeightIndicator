@@ -2,6 +2,8 @@
 
 Client-side Fabric and NeoForge mod. The HUD shows the current Y level and a short, biome-aware list of ores and selected blocks that fit that height.
 
+The settings screen and key binding support English and German. Block and ore names follow Minecraft's selected language.
+
 For installation help and configuration screenshots, see the [user guide](docs/user-guide.md).
 
 Each Minecraft and loader combination has its own JAR. Use the filename that matches both:
@@ -50,7 +52,7 @@ The file is `.minecraft/config/oreheightindicator.json`. Mod Menu and Cloth Conf
 - `maxEntries`: maximum number of HUD rows
 - `updateIntervalTicks`: interval for height and biome checks
 
-The `Displayed ores` category lists every registered block. Use the settings search box to find `Andesite`, `Gravel`, `Oak Log` or a block added by a mod, then enable it. Ores remain enabled by default, while other blocks are opt-in. Selections remain available after a restart.
+The `Displayed ores` category lists standard ores and the extra blocks you have added. Use the `Add block` field to search the live block registry by translated name or registry ID, choose a suggestion and save. The block then appears as its own toggle when you reopen the category. This keeps the settings screen small even with large modpacks. Ores remain enabled by default, while other blocks are opt-in. Selections remain available after a restart.
 
 Press `H` to toggle the HUD.
 

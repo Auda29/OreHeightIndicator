@@ -6,10 +6,12 @@ import net.minecraft.registry.Registries;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 public final class OreDisplayCatalog {
     private static final Map<String, OreOption> KNOWN_TARGETS = createInitialCatalog();
@@ -86,6 +88,21 @@ public final class OreDisplayCatalog {
         return List.copyOf(combined.values());
     }
 
+    public static synchronized List<OreOption> displayedOptionsIncluding(Collection<String> additionalKeys) {
+        Set<String> selectedKeys = normalizedKeys(additionalKeys);
+        return knownOresIncluding(selectedKeys).stream()
+            .filter(option -> option.standardOre() || selectedKeys.contains(option.key()))
+            .toList();
+    }
+
+    public static synchronized List<OreOption> searchableBlocksExcluding(Collection<String> excludedKeys) {
+        Set<String> excluded = normalizedKeys(excludedKeys);
+        return KNOWN_TARGETS.values().stream()
+            .filter(option -> !option.standardOre())
+            .filter(option -> !excluded.contains(option.key()))
+            .toList();
+    }
+
     public static boolean isStandardOre(String key) {
         if (key == null || key.isBlank()) {
             return false;
@@ -105,6 +122,16 @@ public final class OreDisplayCatalog {
             }
         }
         return words.isEmpty() ? key : String.join(" ", words);
+    }
+
+    private static Set<String> normalizedKeys(Collection<String> keys) {
+        Set<String> normalized = new HashSet<>();
+        for (String key : keys) {
+            if (key != null && !key.isBlank()) {
+                normalized.add(key.trim().toLowerCase(Locale.ROOT));
+            }
+        }
+        return normalized;
     }
 
     private static boolean preferredOreBlock(String path) {

@@ -19,11 +19,13 @@
 5. Change `maxEntries`, `minimumPercent`, scale, icons, position and animation in the settings screen. Confirm that each setting still applies.
 6. Disable copper in `Displayed ores` and confirm that it disappears without changing height.
 7. Reopen the settings and restart the game. Confirm that copper stays disabled and can be enabled again.
-8. Search for `Andesite` in `Displayed ores`, enable it and confirm that it appears in the HUD with an icon and suitability value even when the active worldgen provider does not expose an andesite profile.
-9. Search for `Oak Log` and one block added by a mod. Confirm that both can be enabled without first entering a world.
-10. Move above and below the selected blocks and confirm that the value follows either their worldgen profile or the nearby loaded-block sample, including values below `minimumPercent`.
-11. Disable Andesite, reopen the settings and confirm that it remains disabled.
-12. Repeat the core HUD, key binding and settings checks on all six Minecraft and loader combinations.
+8. Confirm that `Displayed ores` initially renders only standard ores and previously added blocks, not every block in the registry.
+9. Use `Add block` to search for `Andesite` by name and registry ID. Choose the suggestion, press `Done`, reopen the category and confirm that Andesite now has its own toggle.
+10. Add `Oak Log` and one block from an installed mod before entering a world. Confirm that both appear in the settings list after saving.
+11. Move above and below the selected blocks and confirm that the value follows either their worldgen profile or the nearby loaded-block sample, including values below `minimumPercent`.
+12. Disable Andesite, reopen the settings and confirm that it remains disabled.
+13. Repeat the core HUD, key binding and settings checks on all six Minecraft and loader combinations.
+14. Switch Minecraft to German and confirm that the settings title, categories, fields, tooltips and HUD key binding are translated. Switch back to English and confirm the English text returns.
 
 ## Worldgen checks
 

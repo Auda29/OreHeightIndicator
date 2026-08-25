@@ -8,7 +8,9 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public final class ModMenuIntegration {
     private ModMenuIntegration() {
@@ -20,109 +22,134 @@ public final class ModMenuIntegration {
 
             ConfigBuilder builder = ConfigBuilder.create()
                 .setParentScreen(parent)
-                .setTitle(Component.literal("Ore Height Indicator Config"));
+                .setTitle(Component.translatable("config.oreheightindicator.title"));
 
             ConfigEntryBuilder entries = builder.entryBuilder();
-            ConfigCategory hud = builder.getOrCreateCategory(Component.literal("HUD"));
-            ConfigCategory displayedOres = builder.getOrCreateCategory(Component.literal("Displayed ores"));
-            ConfigCategory data = builder.getOrCreateCategory(Component.literal("Data & Performance"));
+            ConfigCategory hud = builder.getOrCreateCategory(Component.translatable("config.oreheightindicator.category.hud"));
+            ConfigCategory displayedOres = builder.getOrCreateCategory(Component.translatable("config.oreheightindicator.category.displayed_ores"));
+            ConfigCategory data = builder.getOrCreateCategory(Component.translatable("config.oreheightindicator.category.data"));
 
             hud.addEntry(
-                entries.startBooleanToggle(Component.literal("HUD Enabled"), config.hudEnabled)
+                entries.startBooleanToggle(Component.translatable("config.oreheightindicator.hud_enabled"), config.hudEnabled)
                     .setDefaultValue(true)
-                    .setTooltip(Component.literal("Shows or hides the compact ore height overlay."))
+                    .setTooltip(Component.translatable("config.oreheightindicator.hud_enabled.tooltip"))
                     .setSaveConsumer(value -> config.hudEnabled = value)
                     .build()
             );
 
             hud.addEntry(
-                entries.startIntField(Component.literal("HUD X"), config.hudX)
+                entries.startIntField(Component.translatable("config.oreheightindicator.hud_x"), config.hudX)
                     .setDefaultValue(8)
                     .setMin(0)
-                    .setTooltip(Component.literal("Horizontal HUD offset in pixels from the right edge."))
+                    .setTooltip(Component.translatable("config.oreheightindicator.hud_x.tooltip"))
                     .setSaveConsumer(value -> config.hudX = value)
                     .build()
             );
 
             hud.addEntry(
-                entries.startIntField(Component.literal("HUD Y"), config.hudY)
+                entries.startIntField(Component.translatable("config.oreheightindicator.hud_y"), config.hudY)
                     .setDefaultValue(8)
                     .setMin(0)
-                    .setTooltip(Component.literal("Vertical HUD offset in pixels from the top edge."))
+                    .setTooltip(Component.translatable("config.oreheightindicator.hud_y.tooltip"))
                     .setSaveConsumer(value -> config.hudY = value)
                     .build()
             );
 
             hud.addEntry(
-                entries.startBooleanToggle(Component.literal("Show Entry Icons"), Boolean.TRUE.equals(config.showOreIcons))
+                entries.startBooleanToggle(Component.translatable("config.oreheightindicator.show_icons"), Boolean.TRUE.equals(config.showOreIcons))
                     .setDefaultValue(true)
-                    .setTooltip(Component.literal("Show or hide item icons for each HUD row."))
+                    .setTooltip(Component.translatable("config.oreheightindicator.show_icons.tooltip"))
                     .setSaveConsumer(value -> config.showOreIcons = value)
                     .build()
             );
 
             hud.addEntry(
-                entries.startBooleanToggle(Component.literal("Show Suitability %"), Boolean.TRUE.equals(config.showSuitabilityPercent))
+                entries.startBooleanToggle(Component.translatable("config.oreheightindicator.show_suitability"), Boolean.TRUE.equals(config.showSuitabilityPercent))
                     .setDefaultValue(true)
-                    .setTooltip(Component.literal("Shows the current height relative to each ore's best detected height. This is not an absolute spawn chance."))
+                    .setTooltip(Component.translatable("config.oreheightindicator.show_suitability.tooltip"))
                     .setSaveConsumer(value -> config.showSuitabilityPercent = value)
                     .build()
             );
 
             hud.addEntry(
-                entries.startBooleanToggle(Component.literal("Animate Reorder"), Boolean.TRUE.equals(config.animateReorder))
+                entries.startBooleanToggle(Component.translatable("config.oreheightindicator.animate_reorder"), Boolean.TRUE.equals(config.animateReorder))
                     .setDefaultValue(true)
-                    .setTooltip(Component.literal("Smooth row movement when ore ranking changes."))
+                    .setTooltip(Component.translatable("config.oreheightindicator.animate_reorder.tooltip"))
                     .setSaveConsumer(value -> config.animateReorder = value)
                     .build()
             );
 
             hud.addEntry(
-                entries.startFloatField(Component.literal("UI Scale"), config.uiScale)
+                entries.startFloatField(Component.translatable("config.oreheightindicator.ui_scale"), config.uiScale)
                     .setDefaultValue(1.0f)
                     .setMin(0.5f)
                     .setMax(3.0f)
-                    .setTooltip(Component.literal("Scales the complete HUD size. 1.0 = default size."))
+                    .setTooltip(Component.translatable("config.oreheightindicator.ui_scale.tooltip"))
                     .setSaveConsumer(value -> config.uiScale = value)
                     .build()
             );
 
             hud.addEntry(
-                entries.startFloatField(Component.literal("Minimum Suitability %"), config.minimumPercent != null ? config.minimumPercent : 10.0f)
+                entries.startFloatField(Component.translatable("config.oreheightindicator.minimum_suitability"), config.minimumPercent != null ? config.minimumPercent : 10.0f)
                     .setDefaultValue(10.0f)
                     .setMin(0.0f)
                     .setMax(100.0f)
-                    .setTooltip(Component.literal("Hides standard ores below this share of their best detected height. Selected materials remain visible."))
+                    .setTooltip(Component.translatable("config.oreheightindicator.minimum_suitability.tooltip"))
                     .setSaveConsumer(value -> config.minimumPercent = value)
                     .build()
             );
 
             data.addEntry(
-                entries.startIntField(Component.literal("Update Interval (ticks)"), config.updateIntervalTicks)
+                entries.startIntField(Component.translatable("config.oreheightindicator.update_interval"), config.updateIntervalTicks)
                     .setDefaultValue(6)
                     .setMin(1)
-                    .setTooltip(Component.literal("How often the current height, biome and ore relevance are checked (20 ticks = 1 second)."))
+                    .setTooltip(Component.translatable("config.oreheightindicator.update_interval.tooltip"))
                     .setSaveConsumer(value -> config.updateIntervalTicks = value)
                     .build()
             );
 
             data.addEntry(
-                entries.startIntField(Component.literal("Max HUD Entries"), config.maxEntries)
+                entries.startIntField(Component.translatable("config.oreheightindicator.max_entries"), config.maxEntries)
                     .setDefaultValue(4)
                     .setMin(1)
-                    .setTooltip(Component.literal("Maximum number of ore and material rows shown in the HUD list."))
+                    .setTooltip(Component.translatable("config.oreheightindicator.max_entries.tooltip"))
                     .setSaveConsumer(value -> config.maxEntries = value)
                     .build()
             );
 
             displayedOres.setDescription(new Component[] {
-                Component.literal("Use the search box above to find any registered block, including blocks added by mods."),
-                Component.literal("Ores are enabled by default. Other blocks are opt-in and use active worldgen data or a nearby loaded-chunk sample.")
+                Component.translatable("config.oreheightindicator.displayed_ores.description"),
+                Component.translatable("config.oreheightindicator.displayed_ores.instructions")
             });
+            List<OreDisplayCatalog.OreOption> searchableBlocks = new ArrayList<>(
+                OreDisplayCatalog.searchableBlocksExcluding(config.trackedMaterialKeys())
+            );
+            searchableBlocks.sort(Comparator.comparing(
+                ModMenuIntegration::searchLabel,
+                String.CASE_INSENSITIVE_ORDER
+            ));
+            Map<String, String> searchableKeys = new LinkedHashMap<>();
+            for (OreDisplayCatalog.OreOption option : searchableBlocks) {
+                searchableKeys.put(searchLabel(option), option.key());
+            }
+            if (!searchableKeys.isEmpty()) {
+                displayedOres.addEntry(
+                    entries.startStringDropdownMenu(Component.translatable("config.oreheightindicator.add_block"), "")
+                        .setDefaultValue("")
+                        .setSelections(searchableKeys.keySet())
+                        .setSuggestionMode(true)
+                        .setTooltip(Component.translatable("config.oreheightindicator.add_block.tooltip"))
+                        .setSaveConsumer(selected -> {
+                            String key = searchableKeys.get(selected);
+                            if (key != null) config.setMaterialTracked(key, true);
+                        })
+                        .build()
+                );
+            }
             List<String> configuredKeys = new ArrayList<>(config.hiddenOreKeys());
             configuredKeys.addAll(config.trackedMaterialKeys());
             List<OreDisplayCatalog.OreOption> displayOptions = new ArrayList<>(
-                OreDisplayCatalog.knownOresIncluding(configuredKeys)
+                OreDisplayCatalog.displayedOptionsIncluding(configuredKeys)
             );
             displayOptions.sort(Comparator.comparing(
                 option -> oreLabel(option).getString(),
@@ -132,7 +159,7 @@ public final class ModMenuIntegration {
             if (displayOptions.isEmpty()) {
                 displayedOres.addEntry(
                     entries.startTextDescription(
-                        Component.literal("No registered blocks are available yet.")
+                        Component.translatable("config.oreheightindicator.no_blocks")
                     ).build()
                 );
             } else {
@@ -161,5 +188,9 @@ public final class ModMenuIntegration {
         return option.translationKey().isBlank()
             ? Component.literal(option.fallbackName())
             : Component.translatable(option.translationKey());
+    }
+
+    private static String searchLabel(OreDisplayCatalog.OreOption option) {
+        return oreLabel(option).getString() + " [" + option.key() + "]";
     }
 }
