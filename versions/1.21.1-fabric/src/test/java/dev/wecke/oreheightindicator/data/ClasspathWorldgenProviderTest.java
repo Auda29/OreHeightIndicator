@@ -23,6 +23,7 @@ class ClasspathWorldgenProviderTest {
         assertTrue(ores.contains("minecraft:coal_ore"));
         assertTrue(ores.contains("minecraft:diamond_ore"));
         assertTrue(ores.contains("minecraft:copper_ore"));
+        assertTrue(ores.contains("minecraft:andesite"));
         assertFalse(ores.contains("minecraft:emerald_ore"));
         float diamondAtMinus55 = ClasspathWorldgenProvider.scoreAt(snapshot, "minecraft:diamond_ore", -55);
         float diamondAtMinus30 = ClasspathWorldgenProvider.scoreAt(snapshot, "minecraft:diamond_ore", -30);
@@ -30,6 +31,7 @@ class ClasspathWorldgenProviderTest {
         assertTrue(diamondAtMinus55 > diamondAtMinus30);
         assertTrue(diamondAtMinus30 > diamondAtMinus16);
         assertTrue(ClasspathWorldgenProvider.scoreAt(snapshot, "minecraft:diamond_ore", 72) == 0.0f);
+        assertTrue(ClasspathWorldgenProvider.scoreAt(snapshot, "minecraft:andesite", 0) > 0.0f);
     }
 
     @Test

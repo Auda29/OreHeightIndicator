@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class OreDisplayCatalogTest {
     @Test
@@ -28,6 +30,10 @@ class OreDisplayCatalogTest {
         }
 
         assertEquals("block.minecraft.diamond_ore", option(options, "minecraft:diamond_ore").translationKey());
+        OreDisplayCatalog.OreOption andesite = option(options, "minecraft:andesite");
+        assertEquals("block.minecraft.andesite", andesite.translationKey());
+        assertFalse(andesite.standardOre());
+        assertTrue(option(options, "minecraft:diamond_ore").standardOre());
     }
 
     @Test
@@ -49,6 +55,14 @@ class OreDisplayCatalogTest {
         OreDisplayCatalog.OreOption silver = option(options, "oldmod:silver_ore");
         assertEquals("Silver Ore", silver.fallbackName());
         assertEquals("", silver.translationKey());
+        assertTrue(silver.standardOre());
+    }
+
+    @Test
+    void remembersDetectedNonOreWorldgenMaterialsAsOptional() {
+        OreDisplayCatalog.remember("examplemod:limestone", "Limestone", "block.examplemod.limestone");
+        OreDisplayCatalog.OreOption limestone = option(OreDisplayCatalog.knownOresIncluding(List.of()), "examplemod:limestone");
+        assertFalse(limestone.standardOre());
     }
 
     private static OreDisplayCatalog.OreOption option(

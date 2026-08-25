@@ -3,6 +3,7 @@ package dev.wecke.oreheightindicator.config;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
+import dev.wecke.oreheightindicator.data.OreDisplayCatalog;
 import net.neoforged.fml.loading.FMLPaths;
 
 import java.io.IOException;
@@ -29,6 +30,7 @@ public final class ModConfig {
     public Float uiScale = 1.0f;
     public Float minimumPercent = 10.0f;
     public List<String> hiddenOres = new ArrayList<>();
+    public List<String> trackedMaterials = new ArrayList<>();
 
     public boolean isOreVisible(String oreKey) {
         String normalized = normalizeOreKey(oreKey);
@@ -51,6 +53,32 @@ public final class ModConfig {
 
     public List<String> hiddenOreKeys() {
         return List.copyOf(hiddenOres);
+    }
+
+    public boolean isMaterialTracked(String materialKey) {
+        String normalized = normalizeOreKey(materialKey);
+        return normalized != null && trackedMaterials.contains(normalized);
+    }
+
+    public void setMaterialTracked(String materialKey, boolean tracked) {
+        String normalized = normalizeOreKey(materialKey);
+        if (normalized == null) return;
+        if (tracked) {
+            if (!trackedMaterials.contains(normalized)) {
+                trackedMaterials.add(normalized);
+                trackedMaterials.sort(String::compareTo);
+            }
+        } else {
+            trackedMaterials.removeIf(normalized::equals);
+        }
+    }
+
+    public boolean isDisplayed(String key) {
+        return OreDisplayCatalog.isStandardOre(key) ? isOreVisible(key) : isMaterialTracked(key);
+    }
+
+    public List<String> trackedMaterialKeys() {
+        return List.copyOf(trackedMaterials);
     }
 
     public static ModConfig load() {
@@ -125,6 +153,14 @@ public final class ModConfig {
         hiddenOres = hiddenOres.stream()
             .map(ModConfig::normalizeOreKey)
             .filter(key -> key != null)
+            .distinct()
+            .sorted()
+            .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
+        if (trackedMaterials == null) trackedMaterials = new ArrayList<>();
+        trackedMaterials = trackedMaterials.stream()
+            .map(ModConfig::normalizeOreKey)
+            .filter(key -> key != null)
+            .filter(key -> !OreDisplayCatalog.isStandardOre(key))
             .distinct()
             .sorted()
             .collect(java.util.stream.Collectors.toCollection(ArrayList::new));

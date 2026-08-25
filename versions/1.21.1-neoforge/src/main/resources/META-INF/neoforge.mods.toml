@@ -11,7 +11,7 @@ displayURL="https://github.com/Auda29/OreHeightIndicator"
 logoFile="assets/oreheightindicator/icon.png"
 authors="Auda29"
 description='''
-Shows a compact, worldgen-aware ore height guide for the current biome.
+Shows a compact, worldgen-aware height guide for ores and selected materials.
 '''
 
 [[dependencies.oreheightindicator]]

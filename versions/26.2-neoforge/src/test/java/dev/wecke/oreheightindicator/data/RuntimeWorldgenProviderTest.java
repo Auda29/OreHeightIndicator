@@ -16,7 +16,7 @@ class RuntimeWorldgenProviderTest {
     }
 
     @Test
-    void ignoresOreFeatureConfigUsedForOrdinaryStoneBlobs() {
+    void keepsOrdinaryWorldgenMaterialsDistinctFromNormalizedOres() {
         assertNull(RuntimeWorldgenProvider.normalizeOrePath("granite"));
         assertNull(RuntimeWorldgenProvider.normalizeOrePath("tuff"));
         assertNull(RuntimeWorldgenProvider.normalizeOrePath("clay"));

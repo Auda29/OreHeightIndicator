@@ -1,6 +1,7 @@
 package dev.wecke.oreheightindicator.hud;
 
 import dev.wecke.oreheightindicator.config.ModConfig;
+import dev.wecke.oreheightindicator.data.OreDisplayCatalog;
 import dev.wecke.oreheightindicator.data.OreProbabilityService;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
@@ -127,14 +128,7 @@ public final class OreHudRenderer {
     private void rebuildLines() {
         List<AnimatedOreRow> nextRows = new ArrayList<>();
         int count = 0;
-        for (OreProbabilityService.OreChance chance : probabilityService.sortedChances()) {
-            float threshold = config.minimumPercent != null ? config.minimumPercent : 0.5f;
-            if (!config.isOreVisible(chance.oreKey()) || chance.relevance() < threshold) {
-                continue;
-            }
-            if (count >= config.maxEntries) {
-                break;
-            }
+        for (OreProbabilityService.OreChance chance : selectDisplayedChances()) {
 
             String oreName = chance.oreName();
             String label = chance.translationKey().isEmpty()
@@ -159,6 +153,36 @@ public final class OreHudRenderer {
 
         animatedRows.clear();
         animatedRows.addAll(nextRows);
+    }
+
+    private List<OreProbabilityService.OreChance> selectDisplayedChances() {
+        int limit = Math.max(1, config.maxEntries);
+        List<OreProbabilityService.OreChance> selected = new ArrayList<>(limit);
+
+        for (OreProbabilityService.OreChance chance : probabilityService.sortedChances()) {
+            if (selected.size() >= limit) {
+                break;
+            }
+            if (!OreDisplayCatalog.isStandardOre(chance.oreKey())
+                && config.isMaterialTracked(chance.oreKey())) {
+                selected.add(chance);
+            }
+        }
+
+        float threshold = config.minimumPercent != null ? config.minimumPercent : 10.0f;
+        for (OreProbabilityService.OreChance chance : probabilityService.sortedChances()) {
+            if (selected.size() >= limit) {
+                break;
+            }
+            if (OreDisplayCatalog.isStandardOre(chance.oreKey())
+                && config.isOreVisible(chance.oreKey())
+                && chance.relevance() >= threshold) {
+                selected.add(chance);
+            }
+        }
+
+        selected.sort((left, right) -> Float.compare(right.relevance(), left.relevance()));
+        return selected;
     }
 
     private static ItemStack iconForOre(String oreName) {

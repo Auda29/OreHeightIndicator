@@ -209,12 +209,11 @@ public final class ClasspathWorldgenProvider implements OreDataProvider {
                 continue;
             }
             String normalizedPath = RuntimeWorldgenProvider.normalizeOrePath(blockId.getPath());
-            if (normalizedPath == null) {
-                continue;
-            }
-            String key = blockId.getNamespace() + ":" + normalizedPath;
+            String key = normalizedPath == null
+                ? blockId.toString()
+                : blockId.getNamespace() + ":" + normalizedPath;
             Descriptor existing = descriptors.get(key);
-            if (existing == null || preferredBlock(blockId.getPath())) {
+            if (existing == null || (normalizedPath != null && preferredBlock(blockId.getPath()))) {
                 descriptors.put(key, new Descriptor(
                     key,
                     "block." + blockId.getNamespace() + "." + blockId.getPath(),

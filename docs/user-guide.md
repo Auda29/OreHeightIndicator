@@ -55,8 +55,8 @@ There you can choose a different key.
 The HUD is a quick guide for your current location:
 
 1. **Y** is your current height. Smaller or negative numbers mean you are deeper underground.
-2. The ores are sorted by how well your current height matches them. The best match is at the top.
-3. The green bar shows how good this height is compared with that ore's best detected height.
+2. The entries are sorted by how well your current height matches them. The best match is at the top.
+3. The green bar shows how good this height is compared with that ore or material's best detected height.
 4. The list updates when you change height, biome, or dimension.
 
 The percentage is **not** the chance that the next block contains that ore. For example, `80%` means this height is about 80% as suitable as the best detected height for this ore. It does not mean that 80% of nearby blocks are ore.
@@ -84,24 +84,26 @@ The settings are split into three sections:
 
 - **HUD Enabled:** shows or hides the guide
 - **HUD X / HUD Y:** moves the guide away from the top-right corner
-- **Show Ore Icons:** shows or hides the ore pictures
+- **Show Entry Icons:** shows or hides the block pictures
 - **Show Suitability %:** shows or hides the numbers inside the bars
 - **Animate Reorder:** smoothly moves ores when their order changes
 - **UI Scale:** makes the complete HUD smaller or larger
-- **Minimum Suitability %:** hides ores that are a poor match for the current height; set it to `0` to show every matching ore
+- **Minimum Suitability %:** hides standard ores that are a poor match for the current height; explicitly selected materials remain eligible
 
 ![The HUD category in the Ore Height Indicator configuration screen](assets/user-guide/03-hud-settings.png)
 
 ### Displayed ores
 
-Turn an ore off if you never want it to appear in the HUD. Enter a world once before opening this page so the mod can detect the available ores.
+Turn an ore off if you never want it to appear in the HUD. To add a material, type its name into the search box at the top. For example, search for `Andesite` and enable its toggle. Standard ores are on by default; additional materials are off until you select them.
+
+Enter a world once before opening this page so the mod can detect materials added or changed by datapacks and mods. A selected material uses the same relative height-suitability scale as an ore. The percentage is not an absolute block frequency.
 
 ![The Displayed ores category with individual ore toggles](assets/user-guide/04-displayed-ores.png)
 
 ### Data & Performance
 
 - **Update Interval (ticks):** how often the mod checks your location; `20` ticks are one second
-- **Max Ore Entries:** the maximum number of ore rows visible at once
+- **Max HUD Entries:** the maximum number of ore and material rows visible at once
 
 ![The Data and Performance category with update interval and maximum ore entries](assets/user-guide/05-data-performance.png)
 
@@ -114,7 +116,7 @@ In singleplayer, the mod reads the active world-generation data. This means it c
 - your biome
 - the Overworld, Nether, or End
 - active datapacks
-- modded ores that use Minecraft's standard ore-generation system
+- modded ores and materials that use Minecraft's standard ore-generation system
 
 On a multiplayer server, private server datapacks are not sent to your computer. A client-only mod cannot read data the server keeps secret, so those changes may be missing from the guide.
 

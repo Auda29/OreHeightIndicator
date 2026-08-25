@@ -3,7 +3,7 @@
   "id": "oreheightindicator",
   "version": "${version}",
   "name": "Ore Height Indicator",
-  "description": "Shows a compact, worldgen-aware ore height guide for the current biome.",
+  "description": "Shows a compact, worldgen-aware height guide for ores and selected materials.",
   "authors": [
     "Auda29"
   ],

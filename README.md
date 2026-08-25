@@ -1,6 +1,6 @@
 # Ore Height Indicator
 
-Client-side Fabric and NeoForge mod. The HUD shows the current Y level and a short, biome-aware list of ores that fit that height.
+Client-side Fabric and NeoForge mod. The HUD shows the current Y level and a short, biome-aware list of ores and selected worldgen materials that fit that height.
 
 For installation help and configuration screenshots, see the [user guide](docs/user-guide.md).
 
@@ -18,9 +18,9 @@ The split is intentional. Fabric and NeoForge use different loader APIs, while M
 ## What the HUD shows
 
 - Current Y level
-- Up to four ore rows by default
-- Ore icon and localized block name
-- One small suitability bar per ore
+- Up to four rows by default
+- Block icon and localized name
+- One small suitability bar per entry
 
 The bar rates the current height against that ore's best detected height in the active biome. When enabled, the number on the bar shows the same relative suitability as a percentage. It is not an absolute spawn chance, percentages for different ores are not directly comparable, and the rows do not add up to 100 percent.
 
@@ -28,7 +28,7 @@ The bar rates the current height against that ore's best detected height in the 
 
 There is no provider switch and no downloaded Wiki table in the runtime path.
 
-In singleplayer, the mod reads the effective registry of the integrated server. This includes active vanilla features, datapacks and modded features that use Minecraft's standard ore configured-feature type.
+In singleplayer, the mod reads the effective registry of the integrated server. This includes active vanilla features, datapacks and modded features that use Minecraft's standard ore configured-feature type. The same data also provides profiles for materials such as andesite, granite and tuff when worldgen places them through that feature type.
 
 If no integrated server is available, the mod reads the worldgen JSON files from the installed Minecraft and mod classpath. This keeps the fallback tied to the installed game version. A remote server can still use private datapacks that it does not send to clients, so those changes cannot be detected by a client-only installation.
 
@@ -38,16 +38,17 @@ The file is `.minecraft/config/oreheightindicator.json`. Mod Menu and Cloth Conf
 
 - `hudEnabled`: show or hide the HUD
 - `hudX`, `hudY`: offset from the top-right corner
-- `showOreIcons`: show ore icons
+- `showOreIcons`: show block icons
 - `showSuitabilityPercent`: show the relative height-suitability percentage on each bar
 - `animateReorder`: animate ranking changes
 - `uiScale`: scale from `0.5` to `3.0`
 - `minimumPercent`: minimum height suitability, despite the legacy field name
 - `hiddenOres`: detected ore IDs that should not appear in the HUD
-- `maxEntries`: maximum number of ore rows
+- `trackedMaterials`: additional detected worldgen material IDs that should appear in the HUD
+- `maxEntries`: maximum number of HUD rows
 - `updateIntervalTicks`: interval for height and biome checks
 
-The `Displayed ores` category lists ores detected from the active worldgen. Each ore can be shown or hidden without changing the datapack or modpack. Hidden selections remain available after a restart.
+The `Displayed ores` category lists standard ores and materials detected from active worldgen. Use the settings search box to find a material such as `Andesite`, then enable it. Ores remain enabled by default, while additional materials are opt-in. Selections remain available after a restart.
 
 Press `H` to toggle the HUD.
 

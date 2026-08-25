@@ -19,7 +19,10 @@
 5. Change `maxEntries`, `minimumPercent`, scale, icons, position and animation in the settings screen. Confirm that each setting still applies.
 6. Disable copper in `Displayed ores` and confirm that it disappears without changing height.
 7. Reopen the settings and restart the game. Confirm that copper stays disabled and can be enabled again.
-8. Repeat the core HUD, key binding and settings checks on all six Minecraft and loader combinations.
+8. Search for `Andesite` in `Displayed ores`, enable it and confirm that it appears in the HUD with an icon and suitability value.
+9. Move above and below its generated range and confirm that the value follows its worldgen height profile, including values below `minimumPercent`.
+10. Disable Andesite, reopen the settings and confirm that it remains disabled.
+11. Repeat the core HUD, key binding and settings checks on all six Minecraft and loader combinations.
 
 ## Worldgen checks
 
@@ -37,10 +40,11 @@
 3. Change its height placement, reload or reopen the world and confirm that its bar changes at the affected heights.
 4. Remove the feature from the biome and confirm that the row disappears.
 5. Confirm that the detected modded ore appears in `Displayed ores` and can be hidden independently.
+6. Add a non-ore block target through the same feature type and confirm that it appears as an optional searchable material.
 
 ## Logs and performance
 
-1. Check `latest.log` for `Loaded ... ore profiles from active worldgen`.
+1. Check `latest.log` for `Loaded ... worldgen profiles from active worldgen`.
 2. Cross a biome boundary and confirm one new profile build, not continuous rebuilding.
 3. Stand still for 60 seconds and confirm that rows do not flicker.
 4. Fly vertically and confirm that only cached relevance values update.

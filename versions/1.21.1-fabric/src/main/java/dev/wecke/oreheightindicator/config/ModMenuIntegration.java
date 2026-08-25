@@ -54,9 +54,9 @@ public final class ModMenuIntegration implements ModMenuApi {
             );
 
             hud.addEntry(
-                entries.startBooleanToggle(Text.literal("Show Ore Icons"), Boolean.TRUE.equals(config.showOreIcons))
+                entries.startBooleanToggle(Text.literal("Show Entry Icons"), Boolean.TRUE.equals(config.showOreIcons))
                     .setDefaultValue(true)
-                    .setTooltip(Text.literal("Show or hide ore item icons for each HUD row."))
+                    .setTooltip(Text.literal("Show or hide item icons for each HUD row."))
                     .setSaveConsumer(value -> config.showOreIcons = value)
                     .build()
             );
@@ -92,7 +92,7 @@ public final class ModMenuIntegration implements ModMenuApi {
                     .setDefaultValue(10.0f)
                     .setMin(0.0f)
                     .setMax(100.0f)
-                    .setTooltip(Text.literal("Hides ores below this share of their best detected height. Set to 0 to show all."))
+                    .setTooltip(Text.literal("Hides standard ores below this share of their best detected height. Selected materials remain visible."))
                     .setSaveConsumer(value -> config.minimumPercent = value)
                     .build()
             );
@@ -107,38 +107,50 @@ public final class ModMenuIntegration implements ModMenuApi {
             );
 
             data.addEntry(
-                entries.startIntField(Text.literal("Max Ore Entries"), config.maxEntries)
+                entries.startIntField(Text.literal("Max HUD Entries"), config.maxEntries)
                     .setDefaultValue(4)
                     .setMin(1)
-                    .setTooltip(Text.literal("Maximum number of ore rows shown in the HUD list."))
+                    .setTooltip(Text.literal("Maximum number of ore and material rows shown in the HUD list."))
                     .setSaveConsumer(value -> config.maxEntries = value)
                     .build()
             );
 
             displayedOres.setDescription(new Text[] {
-                Text.literal("Choose which vanilla and detected modded ores may appear in the HUD.")
+                Text.literal("Use the search box above to find ores or detected worldgen materials such as Andesite."),
+                Text.literal("Ores are enabled by default. Additional materials appear after you enable them.")
             });
-            List<OreDisplayCatalog.OreOption> oreOptions = new ArrayList<>(
-                OreDisplayCatalog.knownOresIncluding(config.hiddenOreKeys())
+            List<String> configuredKeys = new ArrayList<>(config.hiddenOreKeys());
+            configuredKeys.addAll(config.trackedMaterialKeys());
+            List<OreDisplayCatalog.OreOption> displayOptions = new ArrayList<>(
+                OreDisplayCatalog.knownOresIncluding(configuredKeys)
             );
-            oreOptions.sort(Comparator.comparing(
+            displayOptions.sort(Comparator.comparing(
                 option -> oreLabel(option).getString(),
                 String.CASE_INSENSITIVE_ORDER
             ));
 
-            if (oreOptions.isEmpty()) {
+            if (displayOptions.isEmpty()) {
                 displayedOres.addEntry(
                     entries.startTextDescription(
-                        Text.literal("Enter a world once to detect its ores.")
+                        Text.literal("Enter a world once to detect its worldgen materials.")
                     ).build()
                 );
             } else {
-                for (OreDisplayCatalog.OreOption option : oreOptions) {
+                for (OreDisplayCatalog.OreOption option : displayOptions) {
+                    boolean visible = option.standardOre()
+                        ? config.isOreVisible(option.key())
+                        : config.isMaterialTracked(option.key());
                     displayedOres.addEntry(
-                        entries.startBooleanToggle(oreLabel(option), config.isOreVisible(option.key()))
-                            .setDefaultValue(true)
+                        entries.startBooleanToggle(oreLabel(option), visible)
+                            .setDefaultValue(option.standardOre())
                             .setTooltip(Text.literal(option.key()))
-                            .setSaveConsumer(visible -> config.setOreVisible(option.key(), visible))
+                            .setSaveConsumer(selected -> {
+                                if (option.standardOre()) {
+                                    config.setOreVisible(option.key(), selected);
+                                } else {
+                                    config.setMaterialTracked(option.key(), selected);
+                                }
+                            })
                             .build()
                     );
                 }

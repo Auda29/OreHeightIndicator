@@ -29,4 +29,19 @@ class ModConfigTest {
         assertFalse(config.isOreVisible("examplemod:tin_ore"));
         assertTrue(config.hiddenOreKeys().contains("examplemod:tin_ore"));
     }
+
+    @Test
+    void additionalMaterialsAreOptInAndPersistAsNormalizedKeys() {
+        ModConfig config = new ModConfig();
+
+        assertFalse(config.isDisplayed("minecraft:andesite"));
+        config.setMaterialTracked(" Minecraft:Andesite ", true);
+
+        assertTrue(config.isMaterialTracked("minecraft:andesite"));
+        assertTrue(config.isDisplayed("minecraft:andesite"));
+        assertTrue(config.trackedMaterialKeys().contains("minecraft:andesite"));
+
+        config.setMaterialTracked("minecraft:andesite", false);
+        assertFalse(config.isDisplayed("minecraft:andesite"));
+    }
 }

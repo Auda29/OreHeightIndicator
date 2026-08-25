@@ -99,7 +99,7 @@ public final class RuntimeWorldgenProvider implements OreDataProvider {
             if (contextKey.equals(requestedContext)) {
                 snapshot = rebuilt;
                 LOGGER.info(
-                    "Loaded {} ore profiles from active worldgen for {} at {}",
+                    "Loaded {} worldgen profiles from active worldgen for {} at {}",
                     rebuilt.ores.size(),
                     dimensionKey.identifier(),
                     rebuilt.biomeLabel
@@ -109,7 +109,7 @@ public final class RuntimeWorldgenProvider implements OreDataProvider {
             if (contextKey.equals(requestedContext)) {
                 requestedContext = "";
             }
-            LOGGER.warn("Could not build ore profiles from active worldgen", ex);
+            LOGGER.warn("Could not build worldgen profiles from active worldgen", ex);
         }
     }
 
@@ -135,7 +135,7 @@ public final class RuntimeWorldgenProvider implements OreDataProvider {
                     continue;
                 }
 
-                Map<String, OreDescriptor> descriptors = describeOreTargets(oreConfig);
+                Map<String, OreDescriptor> descriptors = describeWorldgenTargets(oreConfig);
                 if (descriptors.isEmpty()) {
                     continue;
                 }
@@ -185,20 +185,18 @@ public final class RuntimeWorldgenProvider implements OreDataProvider {
         return new Snapshot(contextKey, minY, maxY, revision, List.copyOf(normalized), biomeLabel);
     }
 
-    private static Map<String, OreDescriptor> describeOreTargets(OreConfiguration config) {
+    private static Map<String, OreDescriptor> describeWorldgenTargets(OreConfiguration config) {
         Map<String, OreDescriptor> descriptors = new LinkedHashMap<>();
         for (OreConfiguration.TargetBlockState target : config.targetStates) {
             BlockState state = target.state;
             Block block = state.getBlock();
             Identifier blockId = BuiltInRegistries.BLOCK.getKey(block);
             String normalizedPath = normalizeOrePath(blockId.getPath());
-            if (normalizedPath == null) {
-                continue;
-            }
-
-            String key = blockId.getNamespace() + ":" + normalizedPath;
+            String key = normalizedPath == null
+                ? blockId.toString()
+                : blockId.getNamespace() + ":" + normalizedPath;
             OreDescriptor existing = descriptors.get(key);
-            boolean preferred = isPreferredDisplayBlock(blockId.getPath());
+            boolean preferred = normalizedPath != null && isPreferredDisplayBlock(blockId.getPath());
             if (existing == null || preferred) {
                 Item item = block.asItem();
                 descriptors.put(key, new OreDescriptor(

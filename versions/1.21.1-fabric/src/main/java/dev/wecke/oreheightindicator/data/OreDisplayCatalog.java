@@ -10,7 +10,7 @@ import java.util.Locale;
 import java.util.Map;
 
 public final class OreDisplayCatalog {
-    private static final Map<String, OreOption> KNOWN_ORES = createInitialCatalog();
+    private static final Map<String, OreOption> KNOWN_TARGETS = createInitialCatalog();
 
     private OreDisplayCatalog() {
     }
@@ -31,7 +31,11 @@ public final class OreDisplayCatalog {
             "ancient_debris"
         )) {
             String key = "minecraft:" + path;
-            ores.put(key, new OreOption(key, fallbackName(key), "block.minecraft." + path));
+            ores.put(key, new OreOption(key, fallbackName(key), "block.minecraft." + path, true));
+        }
+        for (String path : List.of("andesite", "diorite", "granite", "tuff")) {
+            String key = "minecraft:" + path;
+            ores.put(key, new OreOption(key, fallbackName(key), "block.minecraft." + path, false));
         }
         return ores;
     }
@@ -40,21 +44,31 @@ public final class OreDisplayCatalog {
         if (key == null || key.isBlank()) {
             return;
         }
-        KNOWN_ORES.put(key, new OreOption(
+        KNOWN_TARGETS.put(key, new OreOption(
             key,
             fallbackName == null || fallbackName.isBlank() ? fallbackName(key) : fallbackName,
-            translationKey == null ? "" : translationKey
+            translationKey == null ? "" : translationKey,
+            isStandardOre(key)
         ));
     }
 
     public static synchronized List<OreOption> knownOresIncluding(Collection<String> additionalKeys) {
-        Map<String, OreOption> combined = new LinkedHashMap<>(KNOWN_ORES);
+        Map<String, OreOption> combined = new LinkedHashMap<>(KNOWN_TARGETS);
         for (String key : additionalKeys) {
             if (key != null && !key.isBlank()) {
-                combined.putIfAbsent(key, new OreOption(key, fallbackName(key), ""));
+                combined.putIfAbsent(key, new OreOption(key, fallbackName(key), "", isStandardOre(key)));
             }
         }
         return List.copyOf(combined.values());
+    }
+
+    public static boolean isStandardOre(String key) {
+        if (key == null || key.isBlank()) {
+            return false;
+        }
+        Identifier id = Identifier.tryParse(key);
+        String path = id == null ? key : id.getPath();
+        return "ancient_debris".equals(path) || path.endsWith("_ore");
     }
 
     static String fallbackName(String key) {
@@ -69,6 +83,6 @@ public final class OreDisplayCatalog {
         return words.isEmpty() ? key : String.join(" ", words);
     }
 
-    public record OreOption(String key, String fallbackName, String translationKey) {
+    public record OreOption(String key, String fallbackName, String translationKey, boolean standardOre) {
     }
 }
