@@ -1,0 +1,36 @@
+modLoader="javafml"
+loaderVersion="[1,)"
+license="MIT"
+issueTrackerURL="https://github.com/Auda29/OreHeightIndicator/issues"
+
+[[mods]]
+modId="oreheightindicator"
+version="${version}"
+displayName="Ore Height Indicator"
+displayURL="https://github.com/Auda29/OreHeightIndicator"
+logoFile="assets/oreheightindicator/icon.png"
+authors="Auda29"
+description='''
+Shows a compact, worldgen-aware ore height guide for the current biome.
+'''
+
+[[dependencies.oreheightindicator]]
+modId="neoforge"
+type="required"
+versionRange="[${neo_version},)"
+ordering="NONE"
+side="CLIENT"
+
+[[dependencies.oreheightindicator]]
+modId="minecraft"
+type="required"
+versionRange="[${minecraft_version}]"
+ordering="NONE"
+side="CLIENT"
+
+[[dependencies.oreheightindicator]]
+modId="cloth_config"
+type="optional"
+versionRange="[26,)"
+ordering="AFTER"
+side="CLIENT"

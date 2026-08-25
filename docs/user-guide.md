@@ -16,7 +16,7 @@ For Fabric, install:
 
 For NeoForge, install:
 
-1. **NeoForge** for Minecraft 1.21.1
+1. **NeoForge** for your Minecraft version
 2. The NeoForge Ore Height Indicator file
 
 Choose the file carefully:
@@ -26,7 +26,9 @@ Choose the file carefully:
 | Minecraft 1.21.1 | Fabric | `+mc1.21.1-fabric.jar` | Java 21 |
 | Minecraft 1.21.1 | NeoForge | `+mc1.21.1-neoforge.jar` | Java 21 |
 | Minecraft 1.21.11 | Fabric | `+mc1.21.11.jar` | Java 21 |
+| Minecraft 1.21.11 | NeoForge | `+mc1.21.11-neoforge.jar` | Java 21 |
 | Minecraft 26.2 | Fabric | `+mc26.2.jar` | Java 25 |
+| Minecraft 26.2 | NeoForge | `+mc26.2-neoforge.jar` | Java 25 |
 
 Put the required files in your `.minecraft/mods` folder, then start the matching Fabric or NeoForge installation from the Minecraft Launcher.
 

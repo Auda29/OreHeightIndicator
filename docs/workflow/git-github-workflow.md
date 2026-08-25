@@ -42,12 +42,14 @@ Write commit messages, pull request titles, tag messages, and release notes in E
    .\gradlew.bat clean build
    .\gradlew.bat -p versions\1.21.1-fabric clean build
    .\gradlew.bat -p versions\1.21.1-neoforge clean build
+   .\gradlew.bat -p versions\1.21.11-neoforge clean build
    .\gradlew.bat -p versions\26.2 clean build
+   .\gradlew.bat -p versions\26.2-neoforge clean build
    ```
 
 4. Commit and push the version change to `main`.
 
-The workflow validates the version and runs the Minecraft 1.21.1 Fabric, 1.21.1 NeoForge and 1.21.11 Fabric test suites with Java 21, followed by the 26.2 Fabric suite with Java 25. If the matching tag does not exist, it creates an annotated tag on the `main` commit. It then creates the GitHub release and attaches all four production JARs and their SHA-256 checksums. Versions containing a suffix such as `0.2.0-beta.1` are published as prereleases.
+The workflow validates the version and runs the Minecraft 1.21.1 Fabric, 1.21.1 NeoForge, 1.21.11 Fabric and 1.21.11 NeoForge test suites with Java 21. It then runs both Minecraft 26.2 suites with Java 25. If the matching tag does not exist, it creates an annotated tag on the `main` commit. It creates the GitHub release with all six production JARs and their SHA-256 checksums. Versions containing a suffix such as `0.2.0-beta.1` are published as prereleases.
 
 Manually creating and pushing the matching annotated tag remains supported when a release needs to start from an explicit tag operation.
 
@@ -79,19 +81,19 @@ The token is entered with hidden input and is sent directly to GitHub. The wizar
 For every new version, the GitHub release workflow builds and tests the mod first. After that workflow succeeds, the CurseForge workflow:
 
 1. Confirms that the version tag points to the released commit.
-2. Downloads all four production JARs and SHA-256 files from the GitHub release.
-3. Verifies all four JAR checksums.
+2. Downloads all six production JARs and SHA-256 files from the GitHub release.
+3. Verifies all six JAR checksums.
 4. Reuses the GitHub release notes as the CurseForge changelog.
 5. Reads the Minecraft versions from the Gradle projects.
-6. Uploads correctly classified Fabric files for Minecraft 1.21.1, 1.21.11 and 26.2, plus a NeoForge file for Minecraft 1.21.1, through the official CurseForge Upload API.
+6. Uploads separate Fabric and NeoForge files for Minecraft 1.21.1, 1.21.11 and 26.2 through the official CurseForge Upload API.
 
-Stable versions use the CurseForge `release` type. Versions containing `alpha` use `alpha`; other suffixed versions use `beta`. Fabric files mark Fabric API as required and Mod Menu and Cloth Config as optional. The NeoForge file marks Cloth Config as optional and does not claim Fabric-only dependencies.
+Stable versions use the CurseForge `release` type. Versions containing `alpha` use `alpha`; other suffixed versions use `beta`. Fabric files mark Fabric API as required and Mod Menu and Cloth Config as optional. NeoForge files mark Cloth Config as optional and do not claim Fabric-only dependencies.
 
 The manual `workflow_dispatch` trigger can publish an existing GitHub release that is missing from CurseForge. Never run it for a tag that already has a CurseForge file.
 
 ## Modrinth release flow
 
-Modrinth releases are published by `.github/workflows/modrinth-release.yml`. The workflow follows the same successful `Release` workflow trigger and tag-to-commit check as CurseForge. It does not rebuild the mod: it downloads the four production JARs and their SHA-256 files from the corresponding GitHub release, verifies every checksum, and uploads those immutable assets through the official Minotaur Gradle plugin.
+Modrinth releases are published by `.github/workflows/modrinth-release.yml`. The workflow follows the same successful `Release` workflow trigger and tag-to-commit check as CurseForge. It does not rebuild the mod: it downloads the six production JARs and their SHA-256 files from the corresponding GitHub release, verifies every checksum, and uploads those immutable assets through the official Minotaur Gradle plugin.
 
 ### One-time setup
 
@@ -114,11 +116,11 @@ The token is supplied only to Minotaur at workflow runtime. Do not add it to `gr
 For every new GitHub release, after the GitHub release workflow succeeds, the Modrinth workflow:
 
 1. Confirms that the release tag points to the commit just released.
-2. Downloads all four JARs plus their SHA-256 files from GitHub Releases.
+2. Downloads all six JARs plus their SHA-256 files from GitHub Releases.
 3. Verifies every checksum before any upload.
 4. Reuses GitHub release notes as the Modrinth changelog.
 5. Publishes one Modrinth version per Minecraft/loader combination, so clients never receive a JAR for the wrong game version.
-6. Marks Fabric API as required and Mod Menu and Cloth Config as optional on Fabric versions. The NeoForge version only marks Cloth Config as optional.
+6. Marks Fabric API as required and Mod Menu and Cloth Config as optional on Fabric versions. NeoForge versions only mark Cloth Config as optional.
 
 Stable versions publish as `release`; versions containing `alpha` publish as `alpha`; other suffixed versions publish as `beta`.
 

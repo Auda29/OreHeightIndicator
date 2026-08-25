@@ -1,0 +1,87 @@
+plugins {
+    id 'java-library'
+    id 'net.neoforged.moddev' version '2.0.144'
+    id 'maven-publish'
+}
+
+def sharedProperties = new Properties()
+file('../../gradle.properties').withInputStream { sharedProperties.load(it) }
+
+version = sharedProperties.getProperty('mod_version')
+group = sharedProperties.getProperty('maven_group')
+
+base {
+    archivesName = sharedProperties.getProperty('archives_base_name')
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name = 'Shedaniel'
+        url = 'https://maven.shedaniel.me/'
+    }
+}
+
+dependencies {
+    compileOnly "me.shedaniel.cloth:cloth-config-neoforge:${project.cloth_config_version}"
+    runtimeOnly "me.shedaniel.cloth:cloth-config-neoforge:${project.cloth_config_version}"
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.11.4'
+}
+
+java {
+    withSourcesJar()
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
+}
+
+neoForge {
+    version = project.neo_version
+
+    runs {
+        client {
+            client()
+            gameDirectory = file('run')
+        }
+    }
+
+    mods {
+        oreheightindicator {
+            sourceSet sourceSets.main
+        }
+    }
+
+    unitTest {
+        enable()
+        testedMod = mods.oreheightindicator
+    }
+}
+
+processResources {
+    inputs.property 'version', project.version
+    inputs.property 'minecraft_version', project.minecraft_version
+    inputs.property 'neo_version', project.neo_version
+
+    filesMatching('META-INF/neoforge.mods.toml') {
+        expand(
+            version: project.version,
+            minecraft_version: project.minecraft_version,
+            neo_version: project.neo_version
+        )
+    }
+}
+
+tasks.named('test', Test) {
+    useJUnitPlatform()
+}
+
+tasks.withType(AbstractArchiveTask).configureEach {
+    archiveVersion = "${project.version}+mc1.21.11-neoforge"
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+}
