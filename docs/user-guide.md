@@ -94,9 +94,9 @@ The settings are split into three sections:
 
 ### Displayed ores
 
-Turn an ore off if you never want it to appear in the HUD. To add a material, type its name into the search box at the top. For example, search for `Andesite` and enable its toggle. Standard ores are on by default; additional materials are off until you select them.
+Turn an ore off if you never want it to appear in the HUD. To add another block, type its translated name or registry ID into the search box at the top. For example, search for `Andesite`, `Oak Log` or a block from an installed mod and enable its toggle. Standard ores are on by default; other blocks are off until you select them.
 
-Enter a world once before opening this page so the mod can detect materials added or changed by datapacks and mods. A selected material uses the same relative height-suitability scale as an ore. The percentage is not an absolute block frequency.
+The list comes from the live Minecraft block registry, so it is available before you enter a world. A selected block first uses an active worldgen profile when one is readable. Otherwise, the mod samples nearby loaded blocks and compares the current height with the best height in that local sample. This fallback fixes materials such as andesite when they are missing from the current worldgen profile. The percentage is still relative suitability, not an absolute block frequency.
 
 ![The Displayed ores category with individual ore toggles](assets/user-guide/04-displayed-ores.png)
 
@@ -117,6 +117,7 @@ In singleplayer, the mod reads the active world-generation data. This means it c
 - the Overworld, Nether, or End
 - active datapacks
 - modded ores and materials that use Minecraft's standard ore-generation system
+- any selected registered block through the nearby loaded-block fallback
 
 On a multiplayer server, private server datapacks are not sent to your computer. A client-only mod cannot read data the server keeps secret, so those changes may be missing from the guide.
 

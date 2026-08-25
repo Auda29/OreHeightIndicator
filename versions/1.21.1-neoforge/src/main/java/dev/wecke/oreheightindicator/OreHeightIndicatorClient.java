@@ -40,7 +40,7 @@ public final class OreHeightIndicatorClient {
     public OreHeightIndicatorClient(IEventBus modBus, ModContainer container) {
         config = ModConfig.getCurrent();
         OreDataProvider provider = new AutomaticWorldgenProvider();
-        hudRenderer = new OreHudRenderer(config, new OreProbabilityService(provider));
+        hudRenderer = new OreHudRenderer(config, new OreProbabilityService(provider, config));
 
         modBus.addListener(this::registerKeyMappings);
         modBus.addListener(this::registerGuiLayers);

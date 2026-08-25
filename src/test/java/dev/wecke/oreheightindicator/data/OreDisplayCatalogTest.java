@@ -11,6 +11,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class OreDisplayCatalogTest {
     @Test
     void includesAllVanillaOresBeforeWorldDetection() {
+        OreDisplayCatalog.rememberRegisteredBlock("minecraft:andesite", "block.minecraft.andesite");
+        OreDisplayCatalog.rememberRegisteredBlock("minecraft:gravel", "block.minecraft.gravel");
+        OreDisplayCatalog.rememberRegisteredBlock("minecraft:oak_log", "block.minecraft.oak_log");
         List<OreDisplayCatalog.OreOption> options = OreDisplayCatalog.knownOresIncluding(List.of());
 
         for (String key : List.of(
@@ -34,6 +37,8 @@ class OreDisplayCatalogTest {
         assertEquals("block.minecraft.andesite", andesite.translationKey());
         assertFalse(andesite.standardOre());
         assertTrue(option(options, "minecraft:diamond_ore").standardOre());
+        assertEquals("block.minecraft.gravel", option(options, "minecraft:gravel").translationKey());
+        assertEquals("block.minecraft.oak_log", option(options, "minecraft:oak_log").translationKey());
     }
 
     @Test

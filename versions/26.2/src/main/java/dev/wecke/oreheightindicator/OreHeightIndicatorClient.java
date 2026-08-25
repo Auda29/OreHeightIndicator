@@ -32,7 +32,7 @@ public final class OreHeightIndicatorClient implements ClientModInitializer {
 
         OreDataProvider provider = new AutomaticWorldgenProvider();
 
-        OreProbabilityService probabilityService = new OreProbabilityService(provider);
+        OreProbabilityService probabilityService = new OreProbabilityService(provider, config);
         hudRenderer = new OreHudRenderer(config, probabilityService);
 
         KeyMapping createdToggleKey = createToggleHudKeyBinding();

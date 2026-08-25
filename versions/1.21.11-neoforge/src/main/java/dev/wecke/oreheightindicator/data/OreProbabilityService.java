@@ -1,8 +1,11 @@
 package dev.wecke.oreheightindicator.data;
 
+import dev.wecke.oreheightindicator.config.ModConfig;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.item.Item;
 
@@ -11,34 +14,50 @@ public final class OreProbabilityService {
         (left, right) -> Float.compare(right.relevance(), left.relevance());
 
     private final OreDataProvider provider;
+    private final ModConfig config;
+    private final TrackedBlockSampler blockSampler;
     private float[] scoreBuffer;
     private final List<OreChance> chancesByProviderIndex;
+    private final List<OreChance> sampledChances;
     private final List<OreChance> sortedChances;
     private int lastY = Integer.MIN_VALUE;
-    private long lastRevision = Long.MIN_VALUE;
+    private long lastProviderRevision = Long.MIN_VALUE;
+    private long lastSamplerRevision = Long.MIN_VALUE;
 
     public OreProbabilityService(OreDataProvider provider) {
+        this(provider, null);
+    }
+
+    public OreProbabilityService(OreDataProvider provider, ModConfig config) {
         this.provider = provider;
+        this.config = config;
+        this.blockSampler = config == null ? null : new TrackedBlockSampler();
         this.scoreBuffer = new float[0];
         this.chancesByProviderIndex = new ArrayList<>();
+        this.sampledChances = new ArrayList<>();
         this.sortedChances = new ArrayList<>();
         rebuildOreList();
     }
 
     public boolean updateIfNeeded(Minecraft client, int y) {
         provider.refresh(client);
+        refreshTrackedBlocks(client);
         return updateIfNeeded(y);
     }
 
     public boolean updateIfNeeded(int y) {
-        long revision = provider.revision();
-        if (y == lastY && revision == lastRevision) {
+        long providerRevision = provider.revision();
+        long samplerRevision = blockSampler == null ? 0L : blockSampler.revision();
+        if (y == lastY && providerRevision == lastProviderRevision && samplerRevision == lastSamplerRevision) {
             return false;
         }
 
-        if (revision != lastRevision || scoreBuffer.length != provider.oreCount()) {
+        if (providerRevision != lastProviderRevision
+            || samplerRevision != lastSamplerRevision
+            || scoreBuffer.length != provider.oreCount()) {
             rebuildOreList();
-            revision = provider.revision();
+            providerRevision = provider.revision();
+            samplerRevision = blockSampler == null ? 0L : blockSampler.revision();
         }
 
         int clampedY = Math.max(provider.minY(), Math.min(provider.maxY(), y));
@@ -48,20 +67,43 @@ public final class OreProbabilityService {
             float relevance = Math.max(0.0f, Math.min(100.0f, scoreBuffer[i] * 100.0f));
             chancesByProviderIndex.get(i).setRelevance(relevance);
         }
+        if (blockSampler != null) {
+            for (OreChance chance : sampledChances) {
+                float relevance = blockSampler.scoreAt(chance.oreKey(), y) * 100.0f;
+                chance.setRelevance(Math.max(0.0f, Math.min(100.0f, relevance)));
+            }
+        }
 
         sortedChances.clear();
         sortedChances.addAll(chancesByProviderIndex);
+        sortedChances.addAll(sampledChances);
         sortedChances.sort(CHANCE_DESC);
         lastY = y;
-        lastRevision = revision;
+        lastProviderRevision = providerRevision;
+        lastSamplerRevision = samplerRevision;
         return true;
+    }
+
+    private void refreshTrackedBlocks(Minecraft client) {
+        if (blockSampler == null || config == null) {
+            return;
+        }
+        Set<String> providerKeys = new HashSet<>();
+        for (int i = 0; i < provider.oreCount(); i++) {
+            providerKeys.add(provider.oreKey(i));
+        }
+        blockSampler.refresh(client, config.trackedMaterialKeys().stream()
+            .filter(key -> !providerKeys.contains(key))
+            .toList());
     }
 
     private void rebuildOreList() {
         int count = Math.max(0, provider.oreCount());
         scoreBuffer = new float[count];
         chancesByProviderIndex.clear();
+        sampledChances.clear();
         sortedChances.clear();
+        Set<String> providerKeys = new HashSet<>();
         for (int i = 0; i < count; i++) {
             OreChance chance = new OreChance(
                 provider.oreKey(i),
@@ -72,11 +114,29 @@ public final class OreProbabilityService {
             );
             chancesByProviderIndex.add(chance);
             sortedChances.add(chance);
+            providerKeys.add(chance.oreKey());
             OreDisplayCatalog.remember(
                 chance.oreKey(),
                 chance.oreName(),
                 chance.translationKey()
             );
+        }
+        if (blockSampler != null) {
+            for (TrackedBlockSampler.Profile profile : blockSampler.profiles()) {
+                if (providerKeys.contains(profile.key())) {
+                    continue;
+                }
+                OreChance chance = new OreChance(
+                    profile.key(),
+                    profile.name(),
+                    profile.translationKey(),
+                    profile.item(),
+                    0.0f
+                );
+                sampledChances.add(chance);
+                sortedChances.add(chance);
+                OreDisplayCatalog.remember(chance.oreKey(), chance.oreName(), chance.translationKey());
+            }
         }
     }
 

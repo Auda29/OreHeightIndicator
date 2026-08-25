@@ -1,6 +1,6 @@
 # Ore Height Indicator
 
-Client-side Fabric and NeoForge mod. The HUD shows the current Y level and a short, biome-aware list of ores and selected worldgen materials that fit that height.
+Client-side Fabric and NeoForge mod. The HUD shows the current Y level and a short, biome-aware list of ores and selected blocks that fit that height.
 
 For installation help and configuration screenshots, see the [user guide](docs/user-guide.md).
 
@@ -28,7 +28,9 @@ The bar rates the current height against that ore's best detected height in the 
 
 There is no provider switch and no downloaded Wiki table in the runtime path.
 
-In singleplayer, the mod reads the effective registry of the integrated server. This includes active vanilla features, datapacks and modded features that use Minecraft's standard ore configured-feature type. The same data also provides profiles for materials such as andesite, granite and tuff when worldgen places them through that feature type.
+In singleplayer, the mod reads the effective registry of the integrated server. This includes active vanilla features, datapacks and modded features that use Minecraft's standard ore configured-feature type.
+
+Every registered block is searchable in `Displayed ores`, including blocks added by mods. If a selected block such as andesite has no readable ore-style worldgen profile, the mod measures its relative height distribution in a sparse sample of nearby loaded blocks. This observed fallback works in singleplayer and multiplayer, respects the blocks the client actually received and refreshes after movement or 30 seconds. It may include blocks placed or removed by players.
 
 If no integrated server is available, the mod reads the worldgen JSON files from the installed Minecraft and mod classpath. This keeps the fallback tied to the installed game version. A remote server can still use private datapacks that it does not send to clients, so those changes cannot be detected by a client-only installation.
 
@@ -44,11 +46,11 @@ The file is `.minecraft/config/oreheightindicator.json`. Mod Menu and Cloth Conf
 - `uiScale`: scale from `0.5` to `3.0`
 - `minimumPercent`: minimum height suitability, despite the legacy field name
 - `hiddenOres`: detected ore IDs that should not appear in the HUD
-- `trackedMaterials`: additional detected worldgen material IDs that should appear in the HUD
+- `trackedMaterials`: additional registered block IDs that should appear in the HUD
 - `maxEntries`: maximum number of HUD rows
 - `updateIntervalTicks`: interval for height and biome checks
 
-The `Displayed ores` category lists standard ores and materials detected from active worldgen. Use the settings search box to find a material such as `Andesite`, then enable it. Ores remain enabled by default, while additional materials are opt-in. Selections remain available after a restart.
+The `Displayed ores` category lists every registered block. Use the settings search box to find `Andesite`, `Gravel`, `Oak Log` or a block added by a mod, then enable it. Ores remain enabled by default, while other blocks are opt-in. Selections remain available after a restart.
 
 Press `H` to toggle the HUD.
 
@@ -107,5 +109,6 @@ Ore Height Indicator is distributed under the [MIT License](LICENSE).
 - `AutomaticWorldgenProvider.java`: automatic source selection
 - `RuntimeWorldgenProvider.java`: active integrated-server registries
 - `ClasspathWorldgenProvider.java`: installed-game fallback
+- `TrackedBlockSampler.java`: nearby loaded-block fallback for selected blocks
 - `OreProbabilityService.java`: relevance calculation and sorting
 - `OreHudRenderer.java`: compact HUD

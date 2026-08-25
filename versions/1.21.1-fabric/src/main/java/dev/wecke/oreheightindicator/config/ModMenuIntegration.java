@@ -17,6 +17,7 @@ public final class ModMenuIntegration implements ModMenuApi {
     public ConfigScreenFactory<?> getModConfigScreenFactory() {
         return parent -> {
             ModConfig config = ModConfig.getCurrent();
+            OreDisplayCatalog.rememberRegisteredBlocks();
 
             ConfigBuilder builder = ConfigBuilder.create()
                 .setParentScreen(parent)
@@ -116,8 +117,8 @@ public final class ModMenuIntegration implements ModMenuApi {
             );
 
             displayedOres.setDescription(new Text[] {
-                Text.literal("Use the search box above to find ores or detected worldgen materials such as Andesite."),
-                Text.literal("Ores are enabled by default. Additional materials appear after you enable them.")
+                Text.literal("Use the search box above to find any registered block, including blocks added by mods."),
+                Text.literal("Ores are enabled by default. Other blocks are opt-in and use active worldgen data or a nearby loaded-chunk sample.")
             });
             List<String> configuredKeys = new ArrayList<>(config.hiddenOreKeys());
             configuredKeys.addAll(config.trackedMaterialKeys());
@@ -132,7 +133,7 @@ public final class ModMenuIntegration implements ModMenuApi {
             if (displayOptions.isEmpty()) {
                 displayedOres.addEntry(
                     entries.startTextDescription(
-                        Text.literal("Enter a world once to detect its worldgen materials.")
+                        Text.literal("No registered blocks are available yet.")
                     ).build()
                 );
             } else {

@@ -1,6 +1,8 @@
 package dev.wecke.oreheightindicator.data;
 
 import net.minecraft.util.Identifier;
+import net.minecraft.block.Block;
+import net.minecraft.registry.Registries;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,11 +35,35 @@ public final class OreDisplayCatalog {
             String key = "minecraft:" + path;
             ores.put(key, new OreOption(key, fallbackName(key), "block.minecraft." + path, true));
         }
-        for (String path : List.of("andesite", "diorite", "granite", "tuff")) {
-            String key = "minecraft:" + path;
-            ores.put(key, new OreOption(key, fallbackName(key), "block.minecraft." + path, false));
-        }
         return ores;
+    }
+
+    public static synchronized void rememberRegisteredBlocks() {
+        for (Identifier blockId : Registries.BLOCK.getIds()) {
+            Block block = Registries.BLOCK.get(blockId);
+            rememberRegisteredBlock(blockId.toString(), block.getTranslationKey());
+        }
+    }
+
+    static synchronized void rememberRegisteredBlock(String rawKey, String translationKey) {
+        Identifier blockId = Identifier.tryParse(rawKey);
+        if (blockId == null) {
+            return;
+        }
+        String normalizedOrePath = RuntimeWorldgenProvider.normalizeOrePath(blockId.getPath());
+        String key = normalizedOrePath == null
+            ? blockId.toString()
+            : blockId.getNamespace() + ":" + normalizedOrePath;
+        OreOption existing = KNOWN_TARGETS.get(key);
+        boolean preferred = normalizedOrePath == null || preferredOreBlock(blockId.getPath());
+        if (existing == null || preferred) {
+            KNOWN_TARGETS.put(key, new OreOption(
+                key,
+                fallbackName(key),
+                translationKey == null ? "" : translationKey,
+                isStandardOre(key)
+            ));
+        }
     }
 
     public static synchronized void remember(String key, String fallbackName, String translationKey) {
@@ -81,6 +107,14 @@ public final class OreDisplayCatalog {
             }
         }
         return words.isEmpty() ? key : String.join(" ", words);
+    }
+
+    private static boolean preferredOreBlock(String path) {
+        return !(path.startsWith("deepslate_")
+            || path.startsWith("stone_")
+            || path.startsWith("netherrack_")
+            || path.startsWith("blackstone_")
+            || path.startsWith("end_stone_"));
     }
 
     public record OreOption(String key, String fallbackName, String translationKey, boolean standardOre) {

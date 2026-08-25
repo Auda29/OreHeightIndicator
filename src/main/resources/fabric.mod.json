@@ -3,7 +3,7 @@
   "id": "oreheightindicator",
   "version": "${version}",
   "name": "Ore Height Indicator",
-  "description": "Shows a compact, worldgen-aware height guide for ores and selected materials.",
+  "description": "Shows a compact height guide for ores and any selected registered block.",
   "authors": [
     "Auda29"
   ],
